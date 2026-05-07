@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>Numarine 37XP · AR Experience</title>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Montserrat:wght@300;400;500&display=swap');
+    :root {
+      --o: #e8590c; --b: #111111; --c: #f7f4ef; --c2: #fbf8f4;
+      --bd: #ece7df; --g: #666666; --g2: #999999; --w: #ffffff;
+      --ser: 'EB Garamond', Georgia, serif; --san: 'Montserrat', Arial, sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
+    body{font-family:var(--san);overflow:hidden;background:var(--b);width:100vw;height:100vh;}
+    a-scene{position:fixed!important;inset:0;z-index:0;}
+
+    /* MODE SELECTOR */
+    #ms{position:fixed;inset:0;z-index:2000;background:var(--b);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 28px;}
+    .ms-logo{width:115px;margin-bottom:8px;}
+    .ms-tag{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--g2);margin-bottom:28px;}
+    .ms-line{width:36px;height:1px;background:var(--o);margin-bottom:24px;opacity:.6;}
+    .ms-h{font-family:var(--ser);font-size:27px;font-weight:400;color:var(--c);text-align:center;line-height:1.25;margin-bottom:8px;}
+    .ms-s{font-size:11px;color:var(--g);text-align:center;line-height:1.65;margin-bottom:34px;max-width:255px;}
+    .ms-cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;}
+    .ms-card{padding:17px 18px;border:.5px solid rgba(255,255,255,.09);border-radius:2px;background:rgba(255,255,255,.03);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:14px;}
+    .ms-card:active{background:rgba(232,89,12,.1);border-color:rgba(232,89,12,.35);transform:scale(.99);}
+    .ms-num{font-size:8px;letter-spacing:.18em;color:var(--o);font-weight:bold;min-width:18px;}
+    .ms-ct{font-size:10px;letter-spacing:.1em;color:var(--c);margin-bottom:3px;text-transform:uppercase;}
+    .ms-cd{font-size:11px;color:var(--g);line-height:1.5;}
+    .ms-arr{margin-left:auto;color:var(--o);font-size:15px;opacity:.7;}
+    .ms-foot{margin-top:28px;font-size:8px;letter-spacing:.1em;color:rgba(255,255,255,.12);text-transform:uppercase;text-align:center;}
+
+    /* LOADING */
+    #ls{position:fixed;inset:0;z-index:1500;background:var(--b);display:none;flex-direction:column;align-items:center;justify-content:center;transition:opacity .9s ease;}
+    #ls.v{display:flex;} #ls.f{opacity:0;pointer-events:none;}
+    .ls-logo{width:88px;margin-bottom:7px;}
+    .ls-tag{font-size:7px;letter-spacing:.28em;text-transform:uppercase;color:var(--g2);margin-bottom:46px;}
+    .ls-bw{width:110px;height:1px;background:rgba(255,255,255,.07);margin-bottom:14px;}
+    .ls-b{height:1px;width:0%;background:var(--o);transition:width .35s ease;}
+    .ls-h{font-size:8px;letter-spacing:.18em;color:rgba(255,255,255,.18);text-transform:uppercase;}
+
+    /* AR UI */
+    #aui{position:fixed;inset:0;z-index:100;pointer-events:none;display:none;}
+    #aui.v{display:block;}
+    #aui>*{pointer-events:auto;}
+    #vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 56% 62% at 50%52%,transparent 25%,rgba(17,17,17,.65)100%);opacity:0;transition:opacity 1.6s ease;}
+    #vig.on{opacity:1;}
+
+    /* Corners */
+    .crn{position:fixed;width:22px;height:22px;z-index:200;opacity:0;transition:opacity .8s ease;pointer-events:none;}
+    .crn.on{opacity:.7;}
+    .crn.tl{top:16px;left:16px;border-top:1px solid var(--o);border-left:1px solid var(--o);}
+    .crn.tr{top:16px;right:16px;border-top:1px solid var(--o);border-right:1px solid var(--o);}
+    .crn.bl{bottom:90px;left:16px;border-bottom:1px solid var(--o);border-left:1px solid var(--o);}
+    .crn.br{bottom:90px;right:16px;border-bottom:1px solid var(--o);border-right:1px solid var(--o);}
+
+    /* Badge */
+    #bdg{position:fixed;top:max(16px,env(safe-area-inset-top,16px));left:16px;z-index:200;opacity:0;transition:opacity .6s ease;pointer-events:none;}
+    #bdg.on{opacity:1;}
+    #bdg img{width:68px;}
+    .bdg-m{font-size:7px;letter-spacing:.18em;color:var(--o);margin-top:3px;text-transform:uppercase;}
+
+    /* Scan hint */
+    #sh{position:fixed;bottom:106px;left:0;right:0;z-index:200;text-align:center;pointer-events:none;transition:opacity .6s ease;}
+    #sh.off{opacity:0;}
+    .sh-box{display:inline-flex;align-items:center;gap:9px;background:rgba(17,17,17,.88);border:.5px solid rgba(232,89,12,.22);border-radius:2px;padding:10px 18px;}
+    .sh-dot{width:6px;height:6px;border-radius:50%;background:var(--o);animation:blink 1.4s ease-in-out infinite;}
+    @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+    .sh-txt{font-size:9px;letter-spacing:.14em;color:rgba(247,244,239,.8);text-transform:uppercase;}
+
+    /* Scan ring */
+    #sr{position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;transition:opacity .6s ease;}
+    #sr.off{opacity:0;}
+    .sr-o{width:110px;height:110px;border-radius:50%;border:1px solid rgba(232,89,12,.38);display:flex;align-items:center;justify-content:center;animation:sp 2s ease-in-out infinite;margin-bottom:18px;}
+    .sr-i{width:80px;height:80px;border-radius:50%;border:.5px solid rgba(232,89,12,.18);animation:sp 2s ease-in-out infinite reverse;}
+    @keyframes sp{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.06);opacity:1}}
+    .sr-t{font-size:9px;letter-spacing:.14em;color:rgba(247,244,239,.6);text-transform:uppercase;text-align:center;padding:0 30px;line-height:1.8;}
+
+    /* Hotspots */
+    #hs-wrap{position:fixed;inset:0;z-index:300;pointer-events:none;display:none;}
+    .hs{position:absolute;pointer-events:auto;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transform:translate(-50%,-50%);opacity:0;transition:opacity .5s ease;}
+    .hs.on{opacity:1;}
+    .hs-d{width:28px;height:28px;border-radius:50%;background:rgba(17,17,17,.92);border:1px solid var(--o);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--o);font-weight:400;line-height:1;animation:hp 2.5s ease-in-out infinite;}
+    @keyframes hp{0%,100%{box-shadow:0 0 0 0 rgba(232,89,12,.5)}50%{box-shadow:0 0 0 10px rgba(232,89,12,0)}}
+    .hs-l{font-size:7px;letter-spacing:.14em;color:var(--c);background:rgba(17,17,17,.9);padding:3px 8px;border-radius:1px;white-space:nowrap;border:.5px solid rgba(232,89,12,.18);text-transform:uppercase;}
+
+    /* Spec popup */
+    #sp{position:fixed;bottom:92px;left:12px;right:12px;z-index:800;background:var(--b);border:.5px solid rgba(232,89,12,.22);border-radius:2px;padding:22px 20px 20px;display:none;box-shadow:0 -8px 40px rgba(0,0,0,.5);}
+    .sp-a{animation:sua .38s cubic-bezier(.16,1,.3,1) both;}
+    @keyframes sua{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .sp-x{position:absolute;top:16px;right:16px;color:rgba(255,255,255,.22);font-size:18px;cursor:pointer;padding:4px;line-height:1;}
+    .sp-tag{font-size:8px;letter-spacing:.22em;color:var(--o);text-transform:uppercase;font-weight:bold;margin-bottom:7px;}
+    .sp-main{font-family:var(--ser);font-size:22px;font-weight:400;color:var(--c);margin-bottom:6px;line-height:1.2;}
+    .sp-div{width:28px;height:1px;background:var(--o);opacity:.5;margin-bottom:14px;}
+    .sp-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:.5px solid rgba(255,255,255,.06);font-size:12px;}
+    .sp-row:last-child{border-bottom:none;}
+    .sp-k{color:var(--g);}
+    .sp-v{color:var(--c2);text-align:right;max-width:55%;}
+
+    /* Bottom bar */
+    #btm{position:fixed;bottom:0;left:0;right:0;z-index:700;padding:10px 12px max(14px,env(safe-area-inset-bottom,14px));background:linear-gradient(transparent,rgba(17,17,17,.96)38%);display:none;gap:8px;justify-content:center;}
+    #btm.on{display:flex;}
+    .cb{flex:1;max-width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.09);border-radius:2px;padding:10px 6px 9px;color:rgba(247,244,239,.5);cursor:pointer;transition:all .15s;font-family:var(--san);}
+    .cb:active{transform:scale(.96);background:rgba(232,89,12,.1);border-color:rgba(232,89,12,.3);}
+    .cb.on{border-color:rgba(232,89,12,.45);background:rgba(232,89,12,.08);color:var(--o);}
+    .cb-i{font-size:18px;line-height:1;}
+    .cb-l{font-size:7px;letter-spacing:.08em;text-transform:uppercase;text-align:center;}
+
+    /* Full specs */
+    #fsp{position:fixed;bottom:0;left:0;right:0;max-height:76vh;z-index:900;background:var(--b);border-top:1px solid rgba(232,89,12,.18);overflow:hidden;display:none;box-shadow:0 -16px 60px rgba(0,0,0,.6);}
+    .fsp-a{animation:pu .42s cubic-bezier(.16,1,.3,1) both;}
+    @keyframes pu{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .fh{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:.5px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+    .fh-logo{width:68px;display:block;margin-bottom:3px;}
+    .fh-m{font-size:8px;letter-spacing:.16em;color:var(--o);text-transform:uppercase;}
+    .fh-x{color:rgba(255,255,255,.18);font-size:20px;cursor:pointer;padding:4px;}
+    .fb{overflow-y:auto;max-height:calc(76vh - 68px);padding:4px 0 40px;-webkit-overflow-scrolling:touch;}
+    .fs{font-size:8px;letter-spacing:.2em;color:var(--o);padding:16px 22px 7px;text-transform:uppercase;font-weight:bold;}
+    .fr{display:flex;justify-content:space-between;align-items:center;padding:10px 22px;border-bottom:.5px solid rgba(255,255,255,.04);}
+    .fr span:first-child{font-size:12px;color:var(--g);}
+    .fr span:last-child{font-size:11px;color:var(--c2);text-align:right;max-width:55%;}
+  </style>
+</head>
+<body>
+
+<!-- MODE SELECTOR -->
+<div id="ms">
+  <img class="ms-logo" src="https://numarine.com/frontend/img/Dark.png" alt="Numarine">
+  <div class="ms-tag">Born to Explore</div>
+  <div class="ms-line"></div>
+  <div class="ms-h">37XP Explorer<br>AR Experience</div>
+  <div class="ms-s">Tekneyi gerçek ortamınızda deneyimleyin. Bir mod seçin ve başlayın.</div>
+  <div class="ms-cards">
+    <div class="ms-card" onclick="startMode('image')">
+      <div class="ms-num">01</div>
+      <div>
+        <div class="ms-ct">Broşürü Tarat</div>
+        <div class="ms-cd">Kamerayı Numarine broşürüne tut — tekne sayfanın üzerinde belirir</div>
+      </div>
+      <div class="ms-arr">→</div>
+    </div>
+    <div class="ms-card" onclick="startMode('world')">
+      <div class="ms-num">02</div>
+      <div>
+        <div class="ms-ct">Zemine Yerleştir</div>
+        <div class="ms-cd">Tekneyi masa, zemin veya açık alana yerleştir</div>
+      </div>
+      <div class="ms-arr">→</div>
+    </div>
+  </div>
+  <div class="ms-foot">numarine.com · 37XP Explorer · WebAR</div>
+</div>
+
+<!-- LOADING -->
+<div id="ls">
+  <img class="ls-logo" src="https://numarine.com/frontend/img/Dark.png" alt="Numarine">
+  <div class="ls-tag">Born to Explore</div>
+  <div class="ls-bw"><div class="ls-b" id="lb"></div></div>
+  <div class="ls-h" id="lh">Kamera başlatılıyor...</div>
+</div>
+
+<!-- AR UI -->
+<div id="aui">
+  <div id="vig"></div>
+  <div class="crn tl" id="c1"></div><div class="crn tr" id="c2"></div>
+  <div class="crn bl" id="c3"></div><div class="crn br" id="c4"></div>
+  <div id="bdg"><img src="https://numarine.com/frontend/img/Dark.png" alt="Numarine"><div class="bdg-m">37XP · AR</div></div>
+  <div id="sh"><div class="sh-box"><div class="sh-dot"></div><div class="sh-txt" id="sht">Broşürü kameraya tut</div></div></div>
+  <div id="sr" class="off"><div class="sr-o"><div class="sr-i"></div></div><div class="sr-t" id="srt">Düz bir yüzeye dokun</div></div>
+  <div id="hs-wrap">
+    <div class="hs" id="h0" style="left:54%;top:65%" onclick="openSpec('engine')"><div class="hs-d">+</div><div class="hs-l">Motorlar</div></div>
+    <div class="hs" id="h1" style="left:36%;top:43%" onclick="openSpec('cabin')"><div class="hs-d">+</div><div class="hs-l">Kabinler</div></div>
+    <div class="hs" id="h2" style="left:51%;top:28%" onclick="openSpec('bridge')"><div class="hs-d">+</div><div class="hs-l">Köprüüstü</div></div>
+    <div class="hs" id="h3" style="left:72%;top:52%" onclick="openSpec('perf')"><div class="hs-d">+</div><div class="hs-l">Performans</div></div>
+  </div>
+  <div id="sp"><div class="sp-x" onclick="closeSpec()">✕</div><div id="spb"></div></div>
+  <div id="btm">
+    <div class="cb" id="cr" onclick="toggleRot()"><span class="cb-i">↻</span><span class="cb-l" id="rl">Döndür</span></div>
+    <div class="cb" id="cs" onclick="cycleScale()"><span class="cb-i">⤢</span><span class="cb-l" id="sl">Ölçek</span></div>
+    <div class="cb" onclick="toggleFsp()"><span class="cb-i">≡</span><span class="cb-l">Özellikler</span></div>
+    <div class="cb" onclick="doShare()"><span class="cb-i">↑</span><span class="cb-l">Paylaş</span></div>
+  </div>
+  <div id="fsp">
+    <div class="fh">
+      <div><img class="fh-logo" src="https://numarine.com/frontend/img/Dark.png" alt="Numarine"><div class="fh-m">37XP Explorer · Teknik Özellikler</div></div>
+      <div class="fh-x" onclick="toggleFsp()">✕</div>
+    </div>
+    <div class="fb">
+      <div class="fs">Boyutlar</div>
+      <div class="fr"><span>Boy</span><span>37.14 m / 121.85 ft</span></div>
+      <div class="fr"><span>Genişlik</span><span>8.02 m / 26.31 ft</span></div>
+      <div class="fr"><span>Draft</span><span>2.57 m / 8.43 ft</span></div>
+      <div class="fr"><span>Deplasman</span><span>333 t</span></div>
+      <div class="fr"><span>Brüt Tonaj</span><span>362 GT</span></div>
+      <div class="fs">Kapasite</div>
+      <div class="fr"><span>Yakıt</span><span>49,000 L</span></div>
+      <div class="fr"><span>Tatlı Su</span><span>3,000 L</span></div>
+      <div class="fr"><span>Siyah Su</span><span>4,600 L</span></div>
+      <div class="fr"><span>Kabin</span><span>6(+2)+4</span></div>
+      <div class="fr"><span>Misafir + Mürettebat</span><span>12 + 7</span></div>
+      <div class="fs">Motorlar</div>
+      <div class="fr"><span>Ana Motor</span><span>Twin MAN D2868 LE 425</span></div>
+      <div class="fr"><span>Güç</span><span>800 bhp · 588 Kw</span></div>
+      <div class="fr"><span>Devir</span><span>2100 rpm</span></div>
+      <div class="fr"><span>Opsiyon</span><span>MAN D2862 LE 427 · 900bhp</span></div>
+      <div class="fs">Performans</div>
+      <div class="fr"><span>Maks Hız</span><span>14 knot</span></div>
+      <div class="fr"><span>Seyir Hızı</span><span>12 knot</span></div>
+      <div class="fr"><span>Ekonomik</span><span>8 knot</span></div>
+      <div class="fr"><span>Menzil</span><span>6,000 nm</span></div>
+      <div class="fs">Yapı & Sınıf</div>
+      <div class="fr"><span>Gövde</span><span>Çelik</span></div>
+      <div class="fr"><span>Üstyapı</span><span>FRP Kompozit</span></div>
+      <div class="fr"><span>Sınıf</span><span>RINA Pleasure + ✦</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- A-FRAME -->
+<a-scene id="asc"
+  mindar-image="imageTargetSrc:targets/numarine-brochure.mind;autoStart:false;uiLoading:no;uiScanning:no;uiError:no"
+  color-space="sRGB" renderer="colorManagement:true;physicallyCorrectLights:true"
+  vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false" style="display:none">
+  <a-assets timeout="30000">
+    <a-asset-item id="ya" src="assets/yacht.glb"></a-asset-item>
+  </a-assets>
+  <a-entity mindar-image-target="targetIndex:0">
+    <a-entity id="yi" gltf-model="#ya" position="0 0 0.1" rotation="-90 0 0" scale="0 0 0"></a-entity>
+  </a-entity>
+  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+  <a-light type="ambient" color="#fff" intensity="0.9"></a-light>
+  <a-light type="directional" color="#fff5ee" intensity="1.3" position="1 2 1"></a-light>
+  <a-light type="directional" color="#ffeedd" intensity="0.4" position="-1 1 -1"></a-light>
+</a-scene>
+
+<script>
+const SPECS={
+  engine:{tag:'Motorlar',main:'Twin MAN D2868 LE 425',rows:[['Güç','800 bhp (588 Kw)'],['Devir','2100 rpm'],['Standart','IMO Tier III'],['Opsiyon','MAN D2862 · 900bhp']]},
+  cabin:{tag:'Kabin & Yaşam',main:'6(+2)+4 Kabin Düzeni',rows:[['Misafir','12 kişi'],['Mürettebat','7 kişi'],['Güverteler','Alt/Ana/Üst/Flybridge'],['Yapı','Çelik + FRP']]},
+  bridge:{tag:'Köprüüstü & Yapı',main:'RINA Pleasure +',rows:[['Sınıf','RINA Pleasure + ✦'],['Brüt Tonaj','362 GT'],['Boy','37.14 m'],['Genişlik','8.02 m']]},
+  perf:{tag:'Performans',main:'6,000 nm Menzil',rows:[['Maks Hız','14 knot'],['Seyir','12 knot'],['Ekonomik','8 knot'],['Menzil','6,000 nm @ 8 kn']]}
+};
+let mode=null,revealed=false,rotating=false,si=1,toured=false;
+const SC=[['0.15 0.15 0.15','Küçük'],['0.3 0.3 0.3','Normal'],['0.5 0.5 0.5','Büyük']];
+const $=id=>document.getElementById(id);
+
+window.startMode=function(m){
+  mode=m; $('ms').style.display='none'; $('ls').classList.add('v');
+  let p=0; const iv=setInterval(()=>{p=Math.min(p+Math.random()*18+8,88);$('lb').style.width=p+'%';},350);
+  m==='image'?startImage(iv):startWorld(iv);
+};
+
+function startImage(iv){
+  $('lh').textContent='Kamera açılıyor...';
+  const sc=$('asc'); sc.style.display='block';
+  sc.addEventListener('loaded',()=>{
+    sc.systems['mindar-image-system'].start().then(()=>{
+      clearInterval(iv);$('lb').style.width='100%';$('lh').textContent='Hazır!';
+      setTimeout(()=>{$('ls').classList.add('f');setTimeout(()=>$('ls').classList.remove('v'),900);showUI();$('sh').style.display='block';$('sr').classList.add('off');},500);
+    }).catch(()=>$('lh').textContent='Kamera izni gerekli');
+  });
+  sc.addEventListener('targetFound',()=>{
+    if(revealed)return;revealed=true;
+    $('sh').classList.add('off');setTimeout(()=>$('sh').style.display='none',600);
+    $('yi').setAttribute('animation__rv','property:scale;from:0 0 0;to:0.3 0.3 0.3;dur:1400;easing:easeOutElastic');
+    onRevealed();
+  });
+}
+
+function startWorld(iv){
+  $('lh').textContent='Kamera açılıyor...';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}).then(stream=>{
+    clearInterval(iv);$('lb').style.width='100%';$('lh').textContent='Hazır!';
+    const v=document.createElement('video');
+    v.srcObject=stream;v.autoplay=true;v.playsInline=true;
+    v.style.cssText='position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+    document.body.insertBefore(v,document.body.firstChild);
+    setTimeout(()=>{$('ls').classList.add('f');setTimeout(()=>$('ls').classList.remove('v'),900);showUI();$('sh').style.display='none';$('sr').classList.remove('off');$('srt').textContent='Ekrana dokun — tekne yerleşir';},500);
+    document.addEventListener('click',placeWorld,{once:true});
+  }).catch(()=>$('lh').textContent='Kamera izni gerekli');
+}
+
+function placeWorld(){
+  if(revealed)return;revealed=true;$('sr').classList.add('off');
+  const sc=$('asc');sc.style.display='block';
+  const y=document.createElement('a-entity');
+  y.setAttribute('gltf-model','#ya');y.setAttribute('position','0 -1.5 -5');
+  y.setAttribute('scale','0 0 0');y.setAttribute('shadow','cast:true;receive:true');
+  sc.appendChild(y);
+  y.addEventListener('loaded',()=>y.setAttribute('animation__rv','property:scale;from:0 0 0;to:0.3 0.3 0.3;dur:1400;easing:easeOutElastic'));
+  onRevealed();
+}
+
+function onRevealed(){
+  setTimeout(()=>$('vig').classList.add('on'),300);
+  setTimeout(()=>{$('hs-wrap').style.display='block';document.querySelectorAll('.hs').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*220));},1500);
+  setTimeout(()=>$('btm').classList.add('on'),2000);
+  setTimeout(autoTour,2400);
+}
+
+function showUI(){
+  $('aui').classList.add('v');$('bdg').classList.add('on');
+  ['c1','c2','c3','c4'].forEach(id=>$(id).classList.add('on'));
+}
+
+function autoTour(){
+  if(toured)return;toured=true;
+  const keys=['engine','perf','cabin','bridge'];let i=0;
+  (function n(){if(i>=keys.length)return;openSpec(keys[i++]);setTimeout(()=>{closeSpec();setTimeout(n,450);},2200);})();
+}
+
+window.openSpec=function(key){
+  const d=SPECS[key];if(!d)return;
+  $('spb').innerHTML=`<div class="sp-tag">${d.tag}</div><div class="sp-main">${d.main}</div><div class="sp-div"></div>`
+    +d.rows.map(([k,v])=>`<div class="sp-row"><span class="sp-k">${k}</span><span class="sp-v">${v}</span></div>`).join('');
+  const p=$('sp');p.style.display='block';p.className='sp-a';
+};
+window.closeSpec=()=>$('sp').style.display='none';
+
+window.toggleRot=function(){
+  rotating=!rotating;$('cr').classList.toggle('on',rotating);$('rl').textContent=rotating?'Dur':'Döndür';
+  const m=document.querySelector('[gltf-model]');if(!m)return;
+  rotating?m.setAttribute('animation__rot','property:rotation;to:0 360 0;loop:true;dur:18000;easing:linear'):m.removeAttribute('animation__rot');
+};
+
+window.cycleScale=function(){
+  si=(si+1)%SC.length;const[sv,sl]=SC[si];
+  const m=document.querySelector('[gltf-model]');
+  if(m)m.setAttribute('animation__scale',`property:scale;to:${sv};dur:500;easing:easeOutQuad`);
+  $('sl').textContent=sl;
+};
+
+window.toggleFsp=function(){
+  const f=$('fsp'),o=f.style.display==='block';
+  f.style.display=o?'none':'block';if(!o)f.className='fsp-a';
+};
+
+window.doShare=async function(){
+  if(navigator.share){try{await navigator.share({title:'Numarine 37XP AR',url:location.href});}catch(e){}}
+  else{navigator.clipboard?.writeText(location.href);}
+};
+
+let pd=null;
+document.addEventListener('touchmove',e=>{
+  if(!revealed||e.touches.length<2)return;
+  const dx=e.touches[1].clientX-e.touches[0].clientX,dy=e.touches[1].clientY-e.touches[0].clientY,d=Math.sqrt(dx*dx+dy*dy);
+  if(pd!==null){const m=document.querySelector('[gltf-model]');if(m){const s=parseFloat(m.getAttribute('scale').x||'0.3'),n=Math.max(.05,Math.min(.8,s+(d-pd)*.0001));m.setAttribute('scale',`${n} ${n} ${n}`);}}
+  pd=d;
+},{passive:true});
+document.addEventListener('touchend',()=>pd=null);
+</script>
+</body>
+</html>
