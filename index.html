@@ -550,11 +550,6 @@
   <div id="aui">
     <div id="vig"></div>
 
-    <div class="crn tl" id="c1"></div>
-    <div class="crn tr" id="c2"></div>
-    <div class="crn bl" id="c3"></div>
-    <div class="crn br" id="c4"></div>
-
     <div id="bdg">
       <img src="assets/logo.svg" alt="Numarine"
            onerror="this.outerHTML='<div style=\'font-family:Georgia,serif;font-size:17px;letter-spacing:4px;color:#fff;\'>NUMARINE</div>'">
@@ -660,10 +655,10 @@
 
     <a-entity mindar-image-target="targetIndex:0">
       <a-entity id="yi"
-        gltf-model="#url(assets/yacht.glb?v=140)"
+        gltf-model="url(assets/yacht.glb?v=150)"
         position="0 0.08 0"
         rotation="0 0 0"
-        scale="0 0 0"
+        scale="0.25 0.25 0.25"
         shadow="cast:true;receive:true">
       </a-entity>
     </a-entity>
@@ -683,7 +678,15 @@
     };
 
     let revealed=false,rotating=false,si=1,toured=false,pd=null;
-    const SCALES=[['0.03 0.03 0.03','Small'],['0.06 0.06 0.06','Normal'],['0.10 0.10 0.10','Large']];
+    const SCALES=[
+
+  ['0.15 0.15 0.15','Small'],
+
+  ['0.25 0.25 0.25','Normal'],
+
+  ['0.40 0.40 0.40','Large']
+
+];
     const $=id=>document.getElementById(id);
 
     let prog=0;
@@ -693,33 +696,6 @@
     },400);
 
     window.addEventListener('load',()=>{
-      setTimeout(()=>{
-
-    $('lh').textContent='Entering AR preview...';
-
-    $('ls').classList.add('fade');
-
-    setTimeout(()=>{
-
-      $('ls').style.display='none';
-
-      showUI();
-
-      $('vig').classList.add('on');
-
-      $('btm').classList.add('on');
-
-      $('hw').style.display='block';
-
-      document.querySelectorAll('.hs').forEach((el,i)=>{
-
-        setTimeout(()=>el.classList.add('on'),i*150);
-
-      });
-
-    },600);
-
-  },2000);
 
   const scene=$('asc');
       scene.style.display='block';
@@ -729,6 +705,25 @@
         .then(stream=>{
           stream.getTracks().forEach(t=>t.stop());
           $('lh').textContent='Loading AR experience...';
+          setTimeout(()=>{
+
+  if($('ls').style.display!=='none'){
+
+    $('lh').textContent='Point your camera at the printed page';
+
+    $('ls').classList.add('fade');
+
+    setTimeout(()=>{
+
+      $('ls').style.display='none';
+
+      showUI();
+
+    },600);
+
+  }
+
+},1200);
 
           const waitForMindAR=()=>{
             const mindar=scene.systems['mindar-image-system'];
