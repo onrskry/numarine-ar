@@ -693,6 +693,35 @@
     },400);
 
     window.addEventListener('load',()=>{
+      setTimeout(()=>{
+
+    $('lh').textContent='Entering AR preview...';
+
+    $('ls').classList.add('fade');
+
+    setTimeout(()=>{
+
+      $('ls').style.display='none';
+
+      showUI();
+
+      $('vig').classList.add('on');
+
+      $('btm').classList.add('on');
+
+      $('hw').style.display='block';
+
+      document.querySelectorAll('.hs').forEach((el,i)=>{
+
+        setTimeout(()=>el.classList.add('on'),i*150);
+
+      });
+
+    },600);
+
+  },2000);
+
+  const scene=$('asc');
       const scene=$('asc');
       scene.style.display='block';
       $('lh').textContent='Requesting camera permission...';
