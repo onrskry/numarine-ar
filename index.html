@@ -58,7 +58,7 @@
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      transition:opacity 1s ease;
+      transition:opacity .8s ease;
       gap:0;
     }
 
@@ -113,6 +113,23 @@
       line-height:1.5;
     }
 
+    #start-ar-btn{
+      margin-top:2px;
+      background:#fff;
+      color:var(--o);
+      border:0;
+      border-radius:2px;
+      padding:13px 20px;
+      font-size:10px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      font-family:var(--san);
+      font-weight:500;
+      cursor:pointer;
+      box-shadow:0 10px 30px rgba(0,0,0,.12);
+    }
+
+    #start-ar-btn:active{transform:scale(.97);}
 
     .ls-foot{
       padding-bottom:max(32px,env(safe-area-inset-bottom,32px));
@@ -145,28 +162,12 @@
       inset:0;
       z-index:1;
       pointer-events:none;
-      background:radial-gradient(ellipse 55% 60% at 50% 52%,transparent 22%,rgba(0,0,0,.65)100%);
+      background:radial-gradient(ellipse 55% 60% at 50% 52%,transparent 22%,rgba(0,0,0,.55)100%);
       opacity:0;
       transition:opacity 1.8s ease;
     }
 
     #vig.on{opacity:1;}
-
-    .crn{
-      position:fixed;
-      width:22px;
-      height:22px;
-      z-index:200;
-      opacity:0;
-      transition:opacity .8s ease;
-      pointer-events:none;
-    }
-
-    .crn.on{opacity:.75;}
-    .crn.tl{top:16px;left:16px;border-top:1px solid var(--o);border-left:1px solid var(--o);}
-    .crn.tr{top:16px;right:16px;border-top:1px solid var(--o);border-right:1px solid var(--o);}
-    .crn.bl{bottom:90px;left:16px;border-bottom:1px solid var(--o);border-left:1px solid var(--o);}
-    .crn.br{bottom:90px;right:16px;border-bottom:1px solid var(--o);border-right:1px solid var(--o);}
 
     #bdg{
       position:fixed;
@@ -181,7 +182,7 @@
     #bdg.on{opacity:1;}
 
     #bdg img{
-      width:90px;
+      width:110px;
       display:block;
       filter:brightness(0) invert(1);
     }
@@ -519,6 +520,21 @@
 
     .fr span:first-child{font-size:12px;color:var(--g);}
     .fr span:last-child{font-size:11px;color:var(--c2);text-align:right;max-width:55%;}
+
+    .debug-note{
+      position:fixed;
+      left:10px;
+      bottom:84px;
+      z-index:999;
+      color:#fff;
+      background:rgba(0,0,0,.72);
+      border:1px solid rgba(232,89,12,.25);
+      padding:8px 10px;
+      font-size:10px;
+      letter-spacing:.04em;
+      display:none;
+      max-width:80vw;
+    }
   </style>
 </head>
 <body>
@@ -537,7 +553,8 @@
 
     <div class="ls-mid">
       <div class="ls-bw"><div class="ls-b" id="lb"></div></div>
-      <div class="ls-h" id="lh">Starting AR experience...</div>
+      <div class="ls-h" id="lh">Tap Start AR to open the camera</div>
+      <button id="start-ar-btn" type="button">Start AR</button>
     </div>
 
     <div class="ls-spacer"></div>
@@ -643,10 +660,13 @@
     </div>
   </div>
 
+  <div class="debug-note" id="debug"></div>
+
   <a-scene id="asc"
     mindar-image="imageTargetSrc:targets/numarine-brochure.mind;autoStart:false;uiLoading:no;uiScanning:no;uiError:no;filterMinCF:0.001;filterBeta:0.01"
     color-space="sRGB"
-    renderer="colorManagement:true;physicallyCorrectLights:true"
+    renderer="colorManagement:true;physicallyCorrectLights:true;alpha:true"
+    embedded
     vr-mode-ui="enabled:false"
     device-orientation-permission-ui="enabled:false"
     style="display:none">
@@ -655,10 +675,10 @@
 
     <a-entity mindar-image-target="targetIndex:0">
       <a-entity id="yi"
-        gltf-model="url(assets/yacht.glb?v=150)"
+        gltf-model="url(assets/yacht.glb?v=200)"
         position="0 0.08 0"
         rotation="0 0 0"
-        scale="0.25 0.25 0.25"
+        scale="0 0 0"
         shadow="cast:true;receive:true">
       </a-entity>
     </a-entity>
@@ -677,16 +697,14 @@
       perf:{tag:'Performance',main:'6,000 nm Range',rows:[['Max Speed','14 knots'],['Cruising','12 knots'],['Economic','8 knots'],['Range','6,000 nm @ 8 kn']]}
     };
 
-    let revealed=false,rotating=false,si=1,toured=false,pd=null;
+    let revealed=false, rotating=false, si=1, toured=false, pd=null, arStarted=false;
+
     const SCALES=[
+      ['0.15 0.15 0.15','Small'],
+      ['0.25 0.25 0.25','Normal'],
+      ['0.40 0.40 0.40','Large']
+    ];
 
-  ['0.15 0.15 0.15','Small'],
-
-  ['0.25 0.25 0.25','Normal'],
-
-  ['0.40 0.40 0.40','Large']
-
-];
     const $=id=>document.getElementById(id);
 
     let prog=0;
@@ -696,107 +714,141 @@
     },400);
 
     window.addEventListener('load',()=>{
+      const scene=$('asc');
+      const startBtn=$('start-ar-btn');
 
-  const scene=$('asc');
       scene.style.display='block';
-      $('lh').textContent='Requesting camera permission...';
+      $('lh').textContent='Tap Start AR to open the camera';
 
-      navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
-        .then(stream=>{
-          stream.getTracks().forEach(t=>t.stop());
-          $('lh').textContent='Loading AR experience...';
-          setTimeout(()=>{
-
-  if($('ls').style.display!=='none'){
-
-    $('lh').textContent='Point your camera at the printed page';
-
-    $('ls').classList.add('fade');
-
-    setTimeout(()=>{
-
-      $('ls').style.display='none';
-
-      showUI();
-
-    },600);
-
-  }
-
-},1200);
-
-          const waitForMindAR=()=>{
-            const mindar=scene.systems['mindar-image-system'];
-            if(!mindar){setTimeout(waitForMindAR,300);return;}
-            setTimeout(()=>{
-  if($('ls').style.display!=='none'){
-    $('lh').textContent='Camera is ready. Point at the printed page.';
-    hideLoadingNow();
-  }
-},3500);
-
-mindar.start()
-  .then(()=>{
-    clearInterval(barIv);
-    $('lb').style.width='100%';
-    $('lh').textContent='Point your camera at the printed page';
-    hideLoadingNow();
-  });
-          };
-
-          if(scene.hasLoaded){waitForMindAR();}
-          else{scene.addEventListener('loaded',waitForMindAR,{once:true});}
-        })
-        .catch(err=>{
-          console.error(err);
-          clearInterval(barIv);
-          $('lb').style.width='100%';
-          $('lh').textContent='Camera permission is required. Please allow camera access.';
-        });
+      if(startBtn){
+        startBtn.addEventListener('click',startAR);
+      }
 
       scene.addEventListener('targetFound',()=>{
         if(revealed)return;
         revealed=true;
+
         $('sh').classList.add('off');
         setTimeout(()=>$('sh').style.display='none',700);
-        $('yi').setAttribute('animation__rv',`property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`);
+
+        $('yi').setAttribute(
+          'animation__rv',
+          `property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`
+        );
+
         onRevealed();
+      });
+
+      scene.addEventListener('targetLost',()=>{
+        console.log('Target lost');
       });
     });
 
+    function showDebug(text){
+      const d=$('debug');
+      if(!d)return;
+      d.textContent=text;
+      d.style.display='block';
+    }
+
+    function hideLoadingNow(){
+      $('ls').classList.add('fade');
+
+      setTimeout(()=>{
+        $('ls').style.display='none';
+        showUI();
+      },600);
+    }
+
+    async function startAR(){
+      if(arStarted)return;
+      arStarted=true;
+
+      const scene=$('asc');
+      const startBtn=$('start-ar-btn');
+
+      if(startBtn)startBtn.style.display='none';
+
+      try{
+        $('lh').textContent='Opening camera...';
+
+        const waitForMindAR=()=>{
+          const mindar=scene.systems['mindar-image-system'];
+
+          if(!mindar){
+            setTimeout(waitForMindAR,250);
+            return;
+          }
+
+          const fallbackTimer=setTimeout(()=>{
+            if($('ls').style.display!=='none'){
+              $('lh').textContent='Camera is starting. Point at the printed page.';
+              hideLoadingNow();
+            }
+          },5000);
+
+          mindar.start()
+            .then(()=>{
+              clearTimeout(fallbackTimer);
+              clearInterval(barIv);
+              $('lb').style.width='100%';
+              $('lh').textContent='Point your camera at the printed page';
+              hideLoadingNow();
+            })
+            .catch(err=>{
+              console.error(err);
+              clearTimeout(fallbackTimer);
+              clearInterval(barIv);
+              $('lb').style.width='100%';
+              $('lh').textContent='Camera could not be started. Refresh and allow camera access.';
+              showDebug('MindAR start error: ' + (err && err.message ? err.message : err));
+              if(startBtn)startBtn.style.display='block';
+              arStarted=false;
+            });
+        };
+
+        if(scene.hasLoaded){
+          waitForMindAR();
+        }else{
+          scene.addEventListener('loaded',waitForMindAR,{once:true});
+        }
+      }catch(err){
+        console.error(err);
+        clearInterval(barIv);
+        $('lb').style.width='100%';
+        $('lh').textContent='Camera permission is required.';
+        showDebug('Camera error: ' + (err && err.message ? err.message : err));
+        if(startBtn)startBtn.style.display='block';
+        arStarted=false;
+      }
+    }
+
     function onRevealed(){
       setTimeout(()=>$('vig').classList.add('on'),400);
+
       setTimeout(()=>{
         $('hw').style.display='block';
         document.querySelectorAll('.hs').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*220));
-      },1600);
-      setTimeout(()=>$('btm').classList.add('on'),2000);
-      setTimeout(autoTour,2500);
+      },1200);
+
+      setTimeout(()=>$('btm').classList.add('on'),1400);
+      setTimeout(autoTour,1800);
     }
-function hideLoadingNow(){
 
-  $('ls').classList.add('fade');
-
-  setTimeout(()=>{
-
-    $('ls').style.display='none';
-
-    showUI();
-
-  },600);
-
-}
     function showUI(){
       $('aui').classList.add('v');
       $('bdg').classList.add('on');
       $('marina-btn').classList.add('on');
-      ['c1','c2','c3','c4'].forEach(id=>$(id).classList.add('on'));
       $('sh').classList.add('show');
     }
 
     function autoTour(){
-      if(toured)return;toured=true;
-      const keys=['engine','perf','cabin','bridge'];let i=0;
+      if(toured)return;
+      toured=true;
+
+      const keys=['engine','perf','cabin','bridge'];
+      let i=0;
+
       (function next(){
         if(i>=keys.length)return;
         openSpec(keys[i++]);
@@ -805,55 +857,81 @@ function hideLoadingNow(){
     }
 
     window.openSpec=function(key){
-      const d=SPECS[key];if(!d)return;
+      const d=SPECS[key];
+      if(!d)return;
+
       $('spb').innerHTML=
         `<div class="sp-tag">${d.tag}</div>`+
         `<div class="sp-main">${d.main}</div>`+
         `<div class="sp-div"></div>`+
         d.rows.map(([k,v])=>`<div class="sp-row"><span class="sp-k">${k}</span><span class="sp-v">${v}</span></div>`).join('');
-      const p=$('sp');p.style.display='block';p.className='sp-a';
+
+      const p=$('sp');
+      p.style.display='block';
+      p.className='sp-a';
     };
-    window.closeSpec=()=>{$('sp').style.display='none';};
+
+    window.closeSpec=()=>{
+      $('sp').style.display='none';
+    };
 
     window.toggleRot=function(){
       rotating=!rotating;
       $('cr').classList.toggle('on',rotating);
       $('rl').textContent=rotating?'Stop':'Rotate';
+
       const m=$('yi');
-      rotating?m.setAttribute('animation__rot','property:rotation;to:0 360 0;loop:true;dur:18000;easing:linear'):m.removeAttribute('animation__rot');
+
+      if(rotating){
+        m.setAttribute('animation__rot','property:rotation;to:0 360 0;loop:true;dur:18000;easing:linear');
+      }else{
+        m.removeAttribute('animation__rot');
+      }
     };
 
     window.cycleScale=function(){
       si=(si+1)%SCALES.length;
-      const[sv,sl]=SCALES[si];
+      const [sv,sl]=SCALES[si];
+
       $('yi').setAttribute('animation__scale',`property:scale;to:${sv};dur:500;easing:easeOutQuad`);
       $('sl').textContent=sl;
     };
 
     window.toggleFsp=function(){
-      const f=$('fsp'),open=f.style.display==='block';
+      const f=$('fsp');
+      const open=f.style.display==='block';
+
       f.style.display=open?'none':'block';
+
       if(!open)f.className='fsp-a';
     };
 
     window.doShare=async function(){
-      if(navigator.share){try{await navigator.share({title:'Numarine 37XP AR',url:location.href});}catch(e){}}
-      else{navigator.clipboard?.writeText(location.href);}
+      if(navigator.share){
+        try{await navigator.share({title:'Numarine 37XP AR',url:location.href});}catch(e){}
+      }else{
+        navigator.clipboard?.writeText(location.href);
+      }
     };
 
     document.addEventListener('touchmove',e=>{
-      if(!revealed||e.touches.length<2)return;
-      const dx=e.touches[1].clientX-e.touches[0].clientX,dy=e.touches[1].clientY-e.touches[0].clientY;
+      if(!revealed || e.touches.length<2)return;
+
+      const dx=e.touches[1].clientX-e.touches[0].clientX;
+      const dy=e.touches[1].clientY-e.touches[0].clientY;
       const d=Math.sqrt(dx*dx+dy*dy);
+
       if(pd!==null){
         const m=$('yi');
         const cur=m.getAttribute('scale');
-        const sv=parseFloat(cur.x||'0.06');
-        const nv=Math.max(0.005,Math.min(0.25,sv+(d-pd)*0.00008));
+        const sv=parseFloat(cur.x || '0.25');
+        const nv=Math.max(0.005,Math.min(0.8,sv+(d-pd)*0.00008));
         m.setAttribute('scale',`${nv} ${nv} ${nv}`);
       }
+
       pd=d;
     },{passive:true});
+
     document.addEventListener('touchend',()=>pd=null);
   </script>
 </body>
