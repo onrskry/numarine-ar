@@ -113,25 +113,6 @@
       line-height:1.5;
     }
 
-    #start-ar-btn{
-      margin-top:2px;
-      background:#fff;
-      color:var(--o);
-      border:0;
-      border-radius:2px;
-      padding:13px 20px;
-      font-size:10px;
-      letter-spacing:.16em;
-      text-transform:uppercase;
-      font-family:var(--san);
-      font-weight:500;
-      cursor:pointer;
-      box-shadow:0 10px 30px rgba(0,0,0,.12);
-    }
-
-    #start-ar-btn:active{
-      transform:scale(.97);
-    }
 
     .ls-foot{
       padding-bottom:max(32px,env(safe-area-inset-bottom,32px));
@@ -556,8 +537,7 @@
 
     <div class="ls-mid">
       <div class="ls-bw"><div class="ls-b" id="lb"></div></div>
-      <div class="ls-h" id="lh">Tap Start AR to scan the brochure</div>
-      <button id="start-ar-btn" type="button">Start AR</button>
+      <div class="ls-h" id="lh">Starting AR experience...</div>
     </div>
 
     <div class="ls-spacer"></div>
@@ -677,7 +657,7 @@
     style="display:none">
 
     <a-assets timeout="10000">
-      <a-asset-item id="ya" src="assets/yacht.glb?v=33"></a-asset-item>
+      <a-asset-item id="ya" src="assets/yacht.glb?v=120"></a-asset-item>
     </a-assets>
 
     <a-entity mindar-image-target="targetIndex:0">
@@ -704,210 +684,81 @@
       perf:{tag:'Performance',main:'6,000 nm Range',rows:[['Max Speed','14 knots'],['Cruising','12 knots'],['Economic','8 knots'],['Range','6,000 nm @ 8 kn']]}
     };
 
-    let revealed=false;
-    let rotating=false;
-    let si=1;
-    let toured=false;
-    let arStarted=false;
-    let pd=null;
-
-    const SCALES=[
-      ['0.03 0.03 0.03','Small'],
-      ['0.06 0.06 0.06','Normal'],
-      ['0.10 0.10 0.10','Large']
-    ];
-
+    let revealed=false,rotating=false,si=1,toured=false,pd=null;
+    const SCALES=[['0.03 0.03 0.03','Small'],['0.06 0.06 0.06','Normal'],['0.10 0.10 0.10','Large']];
     const $=id=>document.getElementById(id);
 
     let prog=0;
     const barIv=setInterval(()=>{
-      prog=Math.min(prog+Math.random()*8+4,85);
+      prog=Math.min(prog+Math.random()*12+6,80);
       $('lb').style.width=prog+'%';
-    },420);
+    },400);
 
     window.addEventListener('load',()=>{
       const scene=$('asc');
-      const startBtn=$('start-ar-btn');
-      const modelAsset=$('ya');
-
       scene.style.display='block';
-      $('lh').textContent='Tap Start AR to scan the brochure';
+      $('lh').textContent='Requesting camera permission...';
 
-      if(modelAsset){
-        modelAsset.addEventListener('loaded',()=>console.log('GLB loaded successfully'));
-        modelAsset.addEventListener('error',()=>{
-          console.error('GLB failed to load. Check: /assets/yacht.glb');
-          $('lh').textContent='3D model could not be loaded. Check /assets/yacht.glb';
+      const model=$('yi');
+      if(model){
+        model.addEventListener('model-loaded',()=>console.log('GLB loaded successfully'));
+        model.addEventListener('model-error',e=>{
+          console.error('GLB failed to load',e);
+          $('lh').textContent='3D model could not be loaded. Check assets/yacht.glb';
         });
       }
 
-      if(startBtn){
-        startBtn.addEventListener('click',startAR);
-      }
+      navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+        .then(stream=>{
+          stream.getTracks().forEach(t=>t.stop());
+          $('lh').textContent='Loading AR experience...';
+
+          const waitForMindAR=()=>{
+            const mindar=scene.systems['mindar-image-system'];
+            if(!mindar){setTimeout(waitForMindAR,300);return;}
+            mindar.start()
+              .then(()=>{
+                clearInterval(barIv);
+                $('lb').style.width='100%';
+                $('lh').textContent='Point your camera at the printed page';
+                setTimeout(()=>{
+                  $('ls').classList.add('fade');
+                  setTimeout(()=>{$('ls').style.display='none';showUI();},1000);
+                },800);
+              })
+              .catch(err=>{
+                console.error(err);
+                clearInterval(barIv);
+                $('lh').textContent='AR could not be started. Refresh and allow camera access.';
+              });
+          };
+
+          if(scene.hasLoaded){waitForMindAR();}
+          else{scene.addEventListener('loaded',waitForMindAR,{once:true});}
+        })
+        .catch(err=>{
+          console.error(err);
+          clearInterval(barIv);
+          $('lb').style.width='100%';
+          $('lh').textContent='Camera permission is required. Please allow camera access.';
+        });
 
       scene.addEventListener('targetFound',()=>{
         if(revealed)return;
         revealed=true;
-
         $('sh').classList.add('off');
         setTimeout(()=>$('sh').style.display='none',700);
-
-        $('yi').setAttribute(
-          'animation__rv',
-          `property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`
-        );
-
+        $('yi').setAttribute('animation__rv',`property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`);
         onRevealed();
       });
     });
 
-    async function startAR(){
-      if(arStarted)return;
-      arStarted=true;
-
-      const scene=$('asc');
-      const startBtn=$('start-ar-btn');
-
-      if(startBtn)startBtn.style.display='none';
-
-      try{
-
-  $('lh').textContent='Opening camera...';
-
-  const waitForMindAR=()=>{
-
-    const mindar=scene.systems['mindar-image-system'];
-
-    if(!mindar){
-
-      setTimeout(waitForMindAR,250);
-
-      return;
-
-    }
-
-    mindar.start()
-
-      .then(()=>{
-
-        clearInterval(barIv);
-
-        $('lb').style.width='100%';
-
-        $('lh').textContent='Point your camera at the printed page';
-
-        setTimeout(()=>{
-
-          $('ls').classList.add('fade');
-
-          setTimeout(()=>{
-
-            $('ls').style.display='none';
-
-            showUI();
-
-          },900);
-
-        },500);
-
-      })
-
-      .catch(err=>{
-
-        console.error(err);
-
-        clearInterval(barIv);
-
-        $('lh').textContent='Camera could not be started. Refresh and allow camera access.';
-
-        if(startBtn)startBtn.style.display='block';
-
-        arStarted=false;
-
-      });
-
-  };
-
-  if(scene.hasLoaded){
-
-    waitForMindAR();
-
-  }else{
-
-    scene.addEventListener('loaded',waitForMindAR,{once:true});
-
-  }
-
-}catch(err){
-
-  console.error(err);
-
-  clearInterval(barIv);
-
-  $('lb').style.width='100%';
-
-  $('lh').textContent='Camera permission is required.';
-
-  if(startBtn)startBtn.style.display='block';
-
-  arStarted=false;
-
-}
-
-        const waitForMindAR=()=>{
-          const mindar=scene.systems['mindar-image-system'];
-
-          if(!mindar){
-            setTimeout(waitForMindAR,250);
-            return;
-          }
-
-          mindar.start()
-            .then(()=>{
-              clearInterval(barIv);
-              $('lb').style.width='100%';
-              $('lh').textContent='Point your camera at the printed page';
-
-              setTimeout(()=>{
-                $('ls').classList.add('fade');
-                setTimeout(()=>{
-                  $('ls').style.display='none';
-                  showUI();
-                },900);
-              },500);
-            })
-            .catch(err=>{
-              console.error(err);
-              clearInterval(barIv);
-              $('lh').textContent='AR could not be started. Refresh the page and try again.';
-              if(startBtn)startBtn.style.display='block';
-              arStarted=false;
-            });
-        };
-
-        if(scene.hasLoaded){
-          waitForMindAR();
-        }else{
-          scene.addEventListener('loaded',waitForMindAR,{once:true});
-        }
-      }catch(err){
-        console.error(err);
-        clearInterval(barIv);
-        $('lb').style.width='100%';
-        $('lh').textContent='Camera permission is required. Allow camera access in your browser settings.';
-        if(startBtn)startBtn.style.display='block';
-        arStarted=false;
-      }
-    }
-
     function onRevealed(){
       setTimeout(()=>$('vig').classList.add('on'),400);
-
       setTimeout(()=>{
         $('hw').style.display='block';
         document.querySelectorAll('.hs').forEach((el,i)=>setTimeout(()=>el.classList.add('on'),i*220));
       },1600);
-
       setTimeout(()=>$('btm').classList.add('on'),2000);
       setTimeout(autoTour,2500);
     }
@@ -921,12 +772,8 @@
     }
 
     function autoTour(){
-      if(toured)return;
-      toured=true;
-
-      const keys=['engine','perf','cabin','bridge'];
-      let i=0;
-
+      if(toured)return;toured=true;
+      const keys=['engine','perf','cabin','bridge'];let i=0;
       (function next(){
         if(i>=keys.length)return;
         openSpec(keys[i++]);
@@ -935,77 +782,55 @@
     }
 
     window.openSpec=function(key){
-      const d=SPECS[key];
-      if(!d)return;
-
+      const d=SPECS[key];if(!d)return;
       $('spb').innerHTML=
         `<div class="sp-tag">${d.tag}</div>`+
         `<div class="sp-main">${d.main}</div>`+
         `<div class="sp-div"></div>`+
         d.rows.map(([k,v])=>`<div class="sp-row"><span class="sp-k">${k}</span><span class="sp-v">${v}</span></div>`).join('');
-
-      const p=$('sp');
-      p.style.display='block';
-      p.className='sp-a';
+      const p=$('sp');p.style.display='block';p.className='sp-a';
     };
-
-    window.closeSpec=function(){
-      $('sp').style.display='none';
-    };
+    window.closeSpec=()=>{$('sp').style.display='none';};
 
     window.toggleRot=function(){
       rotating=!rotating;
       $('cr').classList.toggle('on',rotating);
       $('rl').textContent=rotating?'Stop':'Rotate';
-
       const m=$('yi');
-      if(rotating){
-        m.setAttribute('animation__rot','property:rotation;to:0 360 0;loop:true;dur:18000;easing:linear');
-      }else{
-        m.removeAttribute('animation__rot');
-      }
+      rotating?m.setAttribute('animation__rot','property:rotation;to:0 360 0;loop:true;dur:18000;easing:linear'):m.removeAttribute('animation__rot');
     };
 
     window.cycleScale=function(){
       si=(si+1)%SCALES.length;
-      const [sv,sl]=SCALES[si];
+      const[sv,sl]=SCALES[si];
       $('yi').setAttribute('animation__scale',`property:scale;to:${sv};dur:500;easing:easeOutQuad`);
       $('sl').textContent=sl;
     };
 
     window.toggleFsp=function(){
-      const f=$('fsp');
-      const open=f.style.display==='block';
+      const f=$('fsp'),open=f.style.display==='block';
       f.style.display=open?'none':'block';
       if(!open)f.className='fsp-a';
     };
 
     window.doShare=async function(){
-      if(navigator.share){
-        try{await navigator.share({title:'Numarine 37XP AR',url:location.href});}catch(e){}
-      }else{
-        navigator.clipboard?.writeText(location.href);
-      }
+      if(navigator.share){try{await navigator.share({title:'Numarine 37XP AR',url:location.href});}catch(e){}}
+      else{navigator.clipboard?.writeText(location.href);}
     };
 
     document.addEventListener('touchmove',e=>{
-      if(!revealed || e.touches.length<2)return;
-
-      const dx=e.touches[1].clientX-e.touches[0].clientX;
-      const dy=e.touches[1].clientY-e.touches[0].clientY;
+      if(!revealed||e.touches.length<2)return;
+      const dx=e.touches[1].clientX-e.touches[0].clientX,dy=e.touches[1].clientY-e.touches[0].clientY;
       const d=Math.sqrt(dx*dx+dy*dy);
-
       if(pd!==null){
         const m=$('yi');
         const cur=m.getAttribute('scale');
-        const sv=parseFloat(cur.x || '0.06');
+        const sv=parseFloat(cur.x||'0.06');
         const nv=Math.max(0.005,Math.min(0.25,sv+(d-pd)*0.00008));
         m.setAttribute('scale',`${nv} ${nv} ${nv}`);
       }
-
       pd=d;
     },{passive:true});
-
     document.addEventListener('touchend',()=>pd=null);
   </script>
 </body>
