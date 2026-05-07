@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
@@ -8,7 +8,7 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Montserrat:wght@300;400;500&display=swap');
     :root{
-      --o:#e8590c;--b:#111;--c:#f7f4ef;--c2:#fbf8f4;
+      --o:#e96818;--b:#111;--c:#f7f4ef;--c2:#fbf8f4;
       --g:#666;--g2:#999;
       --ser:'EB Garamond',Georgia,serif;
       --san:'Montserrat',Arial,sans-serif;
@@ -16,7 +16,7 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
     body{font-family:var(--san);overflow:hidden;background:#000;width:100vw;height:100vh;}
 
-    /* Kamera video */
+    /* Camera video */
     #cam{
       position:fixed;inset:0;z-index:0;
       width:100%;height:100%;object-fit:cover;
@@ -52,7 +52,7 @@
     #vig.on{opacity:1;}
 
     .crn{position:fixed;width:22px;height:22px;z-index:200;opacity:0;transition:opacity .8s ease;pointer-events:none;}
-    .crn.on{opacity:.75;}
+    .crn.on{opacity:.0;}
     .crn.tl{top:16px;left:16px;border-top:1px solid var(--o);border-left:1px solid var(--o);}
     .crn.tr{top:16px;right:16px;border-top:1px solid var(--o);border-right:1px solid var(--o);}
     .crn.bl{bottom:90px;left:16px;border-bottom:1px solid var(--o);border-left:1px solid var(--o);}
@@ -74,7 +74,7 @@
     #marina-btn:active{filter:brightness(1.12);}
     .mb-txt{font-size:8px;letter-spacing:.12em;color:#fff;text-transform:uppercase;font-family:var(--san);font-weight:500;white-space:nowrap;}
 
-    /* Scan hint — ekrana dokun */
+    /* Scan hint */
     #sh{
       position:fixed;inset:0;z-index:200;
       display:none;flex-direction:column;align-items:center;justify-content:center;
@@ -132,7 +132,7 @@
     .fr span:first-child{font-size:12px;color:var(--g);}
     .fr span:last-child{font-size:11px;color:var(--c2);text-align:right;max-width:55%;}
 
-    /* GLB 3D model overlay — basit model-viewer */
+    /* GLB 3D model overlay */
     #mv-wrap{position:fixed;inset:0;z-index:50;pointer-events:none;display:none;}
     #mv-wrap.show{display:block;}
     model-viewer{
@@ -144,7 +144,7 @@
 </head>
 <body>
 
-<!-- Kamera arka plan -->
+<!-- Camera background -->
 <video id="cam" autoplay playsinline muted></video>
 
 <!-- LOADING -->
@@ -157,7 +157,7 @@
   </div>
   <div class="ls-mid">
     <div class="ls-bw"><div class="ls-b" id="lb"></div></div>
-    <div class="ls-h" id="lh">Başlatılıyor...</div>
+    <div class="ls-h" id="lh">Starting...</div>
   </div>
   <div class="ls-foot">
     <a href="https://www.numarine.com" target="_blank">www.numarine.com</a>
@@ -178,31 +178,31 @@
   </div>
 
   <a id="marina-btn" href="https://lab.anam.ai/share/qkeb2wOnS-yQ3EhAarQE1" target="_blank">
-    <span class="mb-txt">💬 Satış Danışmanı</span>
+    <span class="mb-txt">💬 Sales Advisor</span>
   </a>
 
-  <!-- Scan hint: ekrana dokun -->
+  <!-- Scan hint -->
   <div id="sh">
     <div class="sh-ring">
       <div class="sh-ring-i">👆</div>
     </div>
-    <div class="sh-txt">Ekrana dokun<br>tekne yerleşir</div>
+    <div class="sh-txt">Tap the screen<br>to place the yacht</div>
   </div>
 
   <div id="hw">
-    <div class="hs" id="h0" style="left:60%;top:62%" onclick="openSpec('engine')"><div class="hs-d">+</div><div class="hs-l">Motorlar</div></div>
-    <div class="hs" id="h1" style="left:35%;top:42%" onclick="openSpec('cabin')"><div class="hs-d">+</div><div class="hs-l">Kabinler</div></div>
-    <div class="hs" id="h2" style="left:50%;top:25%" onclick="openSpec('bridge')"><div class="hs-d">+</div><div class="hs-l">Köprüüstü</div></div>
-    <div class="hs" id="h3" style="left:75%;top:48%" onclick="openSpec('perf')"><div class="hs-d">+</div><div class="hs-l">Performans</div></div>
+    <div class="hs" id="h0" style="left:60%;top:62%" onclick="openSpec('engine')"><div class="hs-d">+</div><div class="hs-l">Engines</div></div>
+    <div class="hs" id="h1" style="left:35%;top:42%" onclick="openSpec('cabin')"><div class="hs-d">+</div><div class="hs-l">Cabins</div></div>
+    <div class="hs" id="h2" style="left:50%;top:25%" onclick="openSpec('bridge')"><div class="hs-d">+</div><div class="hs-l">Bridge</div></div>
+    <div class="hs" id="h3" style="left:75%;top:48%" onclick="openSpec('perf')"><div class="hs-d">+</div><div class="hs-l">Performance</div></div>
   </div>
 
   <div id="sp"><div class="sp-x" onclick="closeSpec()">✕</div><div id="spb"></div></div>
 
   <div id="btm">
-    <div class="cb" id="cr" onclick="toggleRot()"><span class="cb-i">↻</span><span class="cb-l" id="rl">Döndür</span></div>
-    <div class="cb" id="cs" onclick="cycleScale()"><span class="cb-i">⤢</span><span class="cb-l" id="sl">Ölçek</span></div>
-    <div class="cb" onclick="toggleFsp()"><span class="cb-i">≡</span><span class="cb-l">Özellikler</span></div>
-    <div class="cb" onclick="doShare()"><span class="cb-i">↑</span><span class="cb-l">Paylaş</span></div>
+    <div class="cb" id="cr" onclick="toggleRot()"><span class="cb-i">↻</span><span class="cb-l" id="rl">Rotate</span></div>
+    <div class="cb" id="cs" onclick="cycleScale()"><span class="cb-i">⤢</span><span class="cb-l" id="sl">Scale</span></div>
+    <div class="cb" onclick="toggleFsp()"><span class="cb-i">≡</span><span class="cb-l">Specs</span></div>
+    <div class="cb" onclick="doShare()"><span class="cb-i">↑</span><span class="cb-l">Share</span></div>
   </div>
 
   <div id="fsp">
@@ -211,42 +211,42 @@
         <img class="fh-logo" src="assets/logo.svg" alt="Numarine"
              onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div class="fh-logo-txt">NUMARINE</div>
-        <div class="fh-m">37XP Explorer · Teknik Özellikler</div>
+        <div class="fh-m">37XP Explorer · Technical Specifications</div>
       </div>
       <div class="fh-x" onclick="toggleFsp()">✕</div>
     </div>
     <div class="fb">
-      <div class="fs">Boyutlar</div>
-      <div class="fr"><span>Boy</span><span>37.14 m / 121.85 ft</span></div>
-      <div class="fr"><span>Genişlik</span><span>8.02 m / 26.31 ft</span></div>
+      <div class="fs">Dimensions</div>
+      <div class="fr"><span>Length Overall</span><span>37.14 m / 121.85 ft</span></div>
+      <div class="fr"><span>Beam</span><span>8.02 m / 26.31 ft</span></div>
       <div class="fr"><span>Draft</span><span>2.57 m / 8.43 ft</span></div>
-      <div class="fr"><span>Deplasman</span><span>333 t</span></div>
-      <div class="fr"><span>Brüt Tonaj</span><span>362 GT</span></div>
-      <div class="fs">Kapasite</div>
-      <div class="fr"><span>Yakıt</span><span>49,000 L</span></div>
-      <div class="fr"><span>Tatlı Su</span><span>3,000 L</span></div>
-      <div class="fr"><span>Siyah Su</span><span>4,600 L</span></div>
-      <div class="fr"><span>Kabin</span><span>6(+2)+4</span></div>
-      <div class="fr"><span>Misafir + Mürettebat</span><span>12 + 7</span></div>
-      <div class="fs">Motorlar</div>
-      <div class="fr"><span>Ana Motor</span><span>Twin MAN D2868 LE 425</span></div>
-      <div class="fr"><span>Güç</span><span>800 bhp · 588 Kw</span></div>
-      <div class="fr"><span>Devir</span><span>2100 rpm</span></div>
-      <div class="fr"><span>Opsiyon</span><span>MAN D2862 LE 427 · 900bhp</span></div>
-      <div class="fs">Performans</div>
-      <div class="fr"><span>Maks Hız</span><span>14 knot</span></div>
-      <div class="fr"><span>Seyir Hızı</span><span>12 knot</span></div>
-      <div class="fr"><span>Ekonomik</span><span>8 knot</span></div>
-      <div class="fr"><span>Menzil</span><span>6,000 nm</span></div>
-      <div class="fs">Yapı & Sınıf</div>
-      <div class="fr"><span>Gövde</span><span>Çelik</span></div>
-      <div class="fr"><span>Üstyapı</span><span>FRP Kompozit</span></div>
-      <div class="fr"><span>Sınıf</span><span>RINA Pleasure + ✦</span></div>
+      <div class="fr"><span>Displacement</span><span>333 t</span></div>
+      <div class="fr"><span>Gross Tonnage</span><span>362 GT</span></div>
+      <div class="fs">Capacity</div>
+      <div class="fr"><span>Fuel Capacity</span><span>49,000 L</span></div>
+      <div class="fr"><span>Fresh Water</span><span>3,000 L</span></div>
+      <div class="fr"><span>Black Water</span><span>4,600 L</span></div>
+      <div class="fr"><span>Cabins</span><span>6(+2)+4</span></div>
+      <div class="fr"><span>Guests + Crew</span><span>12 + 7</span></div>
+      <div class="fs">Engines</div>
+      <div class="fr"><span>Main Engines</span><span>Twin MAN D2868 LE 425</span></div>
+      <div class="fr"><span>Power</span><span>800 bhp · 588 kW</span></div>
+      <div class="fr"><span>RPM</span><span>2100 rpm</span></div>
+      <div class="fr"><span>Optional Engines</span><span>MAN D2862 LE 427 · 900 bhp</span></div>
+      <div class="fs">Performance</div>
+      <div class="fr"><span>Maximum Speed</span><span>14 knots</span></div>
+      <div class="fr"><span>Cruising Speed</span><span>12 knots</span></div>
+      <div class="fr"><span>Economic Speed</span><span>8 knots</span></div>
+      <div class="fr"><span>Range</span><span>6,000 nm</span></div>
+      <div class="fs">Construction & Class</div>
+      <div class="fr"><span>Hull</span><span>Steel</span></div>
+      <div class="fr"><span>Superstructure</span><span>FRP Composite</span></div>
+      <div class="fr"><span>Class</span><span>RINA Pleasure + ✦</span></div>
     </div>
   </div>
 </div>
 
-<!-- model-viewer: GLB'yi kamera üstüne overlay olarak gösterir -->
+<!-- model-viewer: displays the GLB as an overlay above the camera -->
 <div id="mv-wrap">
   <model-viewer
     id="mv"
@@ -269,27 +269,27 @@
 
 <script>
 const SPECS={
-  engine:{tag:'Motorlar',main:'Twin MAN D2868 LE 425',
-    rows:[['Güç','800 bhp (588 Kw)'],['Devir','2100 rpm'],['Standart','IMO Tier III'],['Opsiyon','MAN D2862 · 900bhp']]},
-  cabin:{tag:'Kabin & Yaşam',main:'6(+2)+4 Kabin Düzeni',
-    rows:[['Misafir','12 kişi'],['Mürettebat','7 kişi'],['Güverteler','Alt/Ana/Üst/Flybridge'],['Yapı','Çelik + FRP']]},
-  bridge:{tag:'Köprüüstü & Yapı',main:'RINA Pleasure +',
-    rows:[['Sınıf','RINA Pleasure + ✦'],['Brüt Tonaj','362 GT'],['Boy','37.14 m'],['Genişlik','8.02 m']]},
-  perf:{tag:'Performans',main:'6,000 nm Menzil',
-    rows:[['Maks Hız','14 knot'],['Seyir','12 knot'],['Ekonomik','8 knot'],['Menzil','6,000 nm @ 8 kn']]}
+  engine:{tag:'Engines',main:'Twin MAN D2868 LE 425',
+    rows:[['Power','800 bhp (588 kW)'],['RPM','2100 rpm'],['Standard','IMO Tier III'],['Optional','MAN D2862 · 900 bhp']]},
+  cabin:{tag:'Cabins & Living',main:'6(+2)+4 Cabin Layout',
+    rows:[['Guests','12 people'],['Crew','7 people'],['Decks','Lower/Main/Upper/Flybridge'],['Construction','Steel + FRP']]},
+  bridge:{tag:'Bridge & Structure',main:'RINA Pleasure +',
+    rows:[['Class','RINA Pleasure + ✦'],['Gross Tonnage','362 GT'],['Length','37.14 m'],['Beam','8.02 m']]},
+  perf:{tag:'Performance',main:'6,000 nm Range',
+    rows:[['Max Speed','14 knots'],['Cruising Speed','12 knots'],['Economic Speed','8 knots'],['Range','6,000 nm @ 8 kn']]}
 };
 
 let placed=false,rotating=false,si=1,toured=false;
 const $=id=>document.getElementById(id);
 
-/* Loading bar — bağımsız, hiçbir şeyi beklemiyor */
+/* Loading bar — independent */
 let prog=0;
 const barIv=setInterval(()=>{
   prog=Math.min(prog+Math.random()*16+8,90);
   $('lb').style.width=prog+'%';
 },350);
 
-/* Kamera aç — tek sorumluluk: video stream */
+/* Open camera — only responsible for video stream */
 navigator.mediaDevices.getUserMedia({
   video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},
   audio:false
@@ -299,10 +299,10 @@ navigator.mediaDevices.getUserMedia({
   cam.style.display='block';
   cam.play();
 
-  /* Loading'i kapat */
+  /* Close loading */
   clearInterval(barIv);
   $('lb').style.width='100%';
-  $('lh').textContent='Ekrana dokun — tekne yerleşir';
+  $('lh').textContent='Tap the screen to place the yacht';
 
   setTimeout(()=>{
     $('ls').classList.add('fade');
@@ -313,10 +313,10 @@ navigator.mediaDevices.getUserMedia({
 }).catch(()=>{
   clearInterval(barIv);
   $('lb').style.width='100%';
-  $('lh').textContent='Kamera izni gerekli → Ayarlar > Safari > Kamera';
+  $('lh').textContent='Camera permission is required. Please allow camera access.';
 });
 
-/* AR UI göster */
+/* Show AR UI */
 function showARUI(){
   $('aui').classList.add('v');
   $('bdg').classList.add('on');
@@ -324,11 +324,11 @@ function showARUI(){
   ['c1','c2','c3','c4'].forEach(id=>$(id).classList.add('on'));
   $('sh').classList.add('show');
 
-  /* Tap → model yerleştir */
+  /* Tap → place model */
   document.addEventListener('click',onTap,{once:true});
 }
 
-/* Ekrana dokunulunca model-viewer göster */
+/* Show model-viewer after tapping the screen */
 function onTap(){
   if(placed)return;
   placed=true;
@@ -336,13 +336,13 @@ function onTap(){
   $('sh').classList.add('off');
   setTimeout(()=>$('sh').style.display='none',600);
 
-  /* model-viewer'ı göster */
+  /* Show model-viewer */
   $('mv-wrap').classList.add('show');
 
   /* Vignette */
   setTimeout(()=>$('vig').classList.add('on'),300);
 
-  /* Hotspot'lar */
+  /* Hotspots */
   setTimeout(()=>{
     $('hw').style.display='block';
     document.querySelectorAll('.hs').forEach((el,i)=>
@@ -350,10 +350,10 @@ function onTap(){
     );
   },800);
 
-  /* Alt bar */
+  /* Bottom bar */
   setTimeout(()=>$('btm').classList.add('on'),1200);
 
-  /* Spec turu */
+  /* Spec tour */
   setTimeout(autoTour,1800);
 }
 
@@ -383,17 +383,17 @@ window.closeSpec=()=>$('sp').style.display='none';
 window.toggleRot=function(){
   rotating=!rotating;
   $('cr').classList.toggle('on',rotating);
-  $('rl').textContent=rotating?'Dur':'Döndür';
+  $('rl').textContent=rotating?'Stop':'Rotate';
   const mv=$('mv');
   mv.setAttribute('auto-rotate', rotating?'':'false');
 };
 
 window.cycleScale=function(){
-  const sizes=['60%','80%','100%'];
+  const sizes=['Small','Normal','Large'];
+  const scales=[0.5,0.75,1];
   si=(si+1)%sizes.length;
-  const labels=['Küçük','Normal','Büyük'];
-  $('mv-wrap').style.transform=`scale(${[0.5,0.75,1][si]})`;
-  $('sl').textContent=labels[si];
+  $('mv-wrap').style.transform=`scale(${scales[si]})`;
+  $('sl').textContent=sizes[si];
 };
 
 window.toggleFsp=function(){
