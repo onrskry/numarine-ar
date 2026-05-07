@@ -676,7 +676,7 @@
     device-orientation-permission-ui="enabled:false"
     style="display:none">
 
-    <a-assets timeout="30000">
+    <a-assets timeout="10000">
       <a-asset-item id="ya" src="assets/yacht.glb?v=33"></a-asset-item>
     </a-assets>
 
@@ -771,19 +771,88 @@
       if(startBtn)startBtn.style.display='none';
 
       try{
-        $('lh').textContent='Waiting for camera permission...';
 
-        if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-          throw new Error('Camera access is not supported in this browser.');
-        }
+  $('lh').textContent='Opening camera...';
 
-        const stream=await navigator.mediaDevices.getUserMedia({
-          video:{facingMode:{ideal:'environment'}},
-          audio:false
-        });
+  const waitForMindAR=()=>{
 
-        stream.getTracks().forEach(track=>track.stop());
-        $('lh').textContent='Loading AR experience...';
+    const mindar=scene.systems['mindar-image-system'];
+
+    if(!mindar){
+
+      setTimeout(waitForMindAR,250);
+
+      return;
+
+    }
+
+    mindar.start()
+
+      .then(()=>{
+
+        clearInterval(barIv);
+
+        $('lb').style.width='100%';
+
+        $('lh').textContent='Point your camera at the printed page';
+
+        setTimeout(()=>{
+
+          $('ls').classList.add('fade');
+
+          setTimeout(()=>{
+
+            $('ls').style.display='none';
+
+            showUI();
+
+          },900);
+
+        },500);
+
+      })
+
+      .catch(err=>{
+
+        console.error(err);
+
+        clearInterval(barIv);
+
+        $('lh').textContent='Camera could not be started. Refresh and allow camera access.';
+
+        if(startBtn)startBtn.style.display='block';
+
+        arStarted=false;
+
+      });
+
+  };
+
+  if(scene.hasLoaded){
+
+    waitForMindAR();
+
+  }else{
+
+    scene.addEventListener('loaded',waitForMindAR,{once:true});
+
+  }
+
+}catch(err){
+
+  console.error(err);
+
+  clearInterval(barIv);
+
+  $('lb').style.width='100%';
+
+  $('lh').textContent='Camera permission is required.';
+
+  if(startBtn)startBtn.style.display='block';
+
+  arStarted=false;
+
+}
 
         const waitForMindAR=()=>{
           const mindar=scene.systems['mindar-image-system'];
