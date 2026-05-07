@@ -133,7 +133,7 @@
     .fr span:last-child{font-size:11px;color:var(--c2);text-align:right;max-width:55%;}
 
     /* GLB 3D model overlay */
-    #mv-wrap{position:fixed;inset:0;z-index:50;pointer-events:none;display:none;}
+    #mv-wrap{position:fixed;inset:0;z-index:50;pointer-events:auto;display:none;transform:scale(1.25);}
     #mv-wrap.show{display:block;}
     model-viewer{
       width:100%;height:100%;
@@ -252,8 +252,7 @@
     id="mv"
     src="assets/yacht.glb"
     camera-controls
-    disable-zoom
-    auto-rotate
+    touch-action="pan-y"
     auto-rotate-delay="1000"
     rotation-per-second="20deg"
     shadow-intensity="0"
@@ -354,7 +353,7 @@ function onTap(){
   setTimeout(()=>$('btm').classList.add('on'),1200);
 
   /* Spec tour */
-  setTimeout(autoTour,1800);
+  // setTimeout(autoTour,1800);
 }
 
 function autoTour(){
@@ -390,7 +389,7 @@ window.toggleRot=function(){
 
 window.cycleScale=function(){
   const sizes=['Small','Normal','Large'];
-  const scales=[0.5,0.75,1];
+  const scales=[1,1.35,1.7];
   si=(si+1)%sizes.length;
   $('mv-wrap').style.transform=`scale(${scales[si]})`;
   $('sl').textContent=sizes[si];
