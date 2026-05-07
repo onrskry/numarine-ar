@@ -656,13 +656,11 @@
     device-orientation-permission-ui="enabled:false"
     style="display:none">
 
-    <a-assets timeout="10000">
-      <a-asset-item id="ya" src="assets/yacht.glb?v=120"></a-asset-item>
-    </a-assets>
+    <a-assets timeout="3000"></a-assets>
 
     <a-entity mindar-image-target="targetIndex:0">
       <a-entity id="yi"
-        gltf-model="#ya"
+        gltf-model="#url(assets/yacht.glb?v=140)"
         position="0 0.08 0"
         rotation="0 0 0"
         scale="0 0 0"
@@ -699,15 +697,6 @@
       scene.style.display='block';
       $('lh').textContent='Requesting camera permission...';
 
-      const model=$('yi');
-      if(model){
-        model.addEventListener('model-loaded',()=>console.log('GLB loaded successfully'));
-        model.addEventListener('model-error',e=>{
-          console.error('GLB failed to load',e);
-          $('lh').textContent='3D model could not be loaded. Check assets/yacht.glb';
-        });
-      }
-
       navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
         .then(stream=>{
           stream.getTracks().forEach(t=>t.stop());
@@ -716,21 +705,20 @@
           const waitForMindAR=()=>{
             const mindar=scene.systems['mindar-image-system'];
             if(!mindar){setTimeout(waitForMindAR,300);return;}
-            mindar.start()
-              .then(()=>{
-                clearInterval(barIv);
-                $('lb').style.width='100%';
-                $('lh').textContent='Point your camera at the printed page';
-                setTimeout(()=>{
-                  $('ls').classList.add('fade');
-                  setTimeout(()=>{$('ls').style.display='none';showUI();},1000);
-                },800);
-              })
-              .catch(err=>{
-                console.error(err);
-                clearInterval(barIv);
-                $('lh').textContent='AR could not be started. Refresh and allow camera access.';
-              });
+            setTimeout(()=>{
+  if($('ls').style.display!=='none'){
+    $('lh').textContent='Camera is ready. Point at the printed page.';
+    hideLoadingNow();
+  }
+},3500);
+
+mindar.start()
+  .then(()=>{
+    clearInterval(barIv);
+    $('lb').style.width='100%';
+    $('lh').textContent='Point your camera at the printed page';
+    hideLoadingNow();
+  });
           };
 
           if(scene.hasLoaded){waitForMindAR();}
@@ -762,7 +750,19 @@
       setTimeout(()=>$('btm').classList.add('on'),2000);
       setTimeout(autoTour,2500);
     }
+function hideLoadingNow(){
 
+  $('ls').classList.add('fade');
+
+  setTimeout(()=>{
+
+    $('ls').style.display='none';
+
+    showUI();
+
+  },600);
+
+}
     function showUI(){
       $('aui').classList.add('v');
       $('bdg').classList.add('on');
