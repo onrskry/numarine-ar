@@ -297,34 +297,54 @@ window.addEventListener('load',()=>{
   const scene=$('asc');
   scene.style.display='block';
 
-  $('lh').textContent='Kamera izni bekleniyor...';
+  // Önce kamera iznini kendin al
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
+    .then(stream=>{
+      // İzin alındı — stream'i kapat, MindAR kendi açacak
+      stream.getTracks().forEach(t=>t.stop());
+      $('lh').textContent='AR yükleniyor...';
 
-  // A-Frame scene loaded event
-  const onSceneLoaded=()=>{
-    $('lh').textContent='Kamera açılıyor...';
-    const mindar=scene.systems['mindar-image-system'];
-    if(!mindar){
-      setTimeout(onSceneLoaded,500);
-      return;
-    }
-    mindar.start()
-      .then(()=>{
-        clearInterval(barIv);
-        $('lb').style.width='100%';
-        $('lh').textContent='Broşürü kameraya tut';
-        setTimeout(()=>{
-          $('ls').classList.add('fade');
-          setTimeout(()=>$('ls').style.display='none',1000);
-          showUI();
-        },800);
-      })
-      .catch(err=>{
-        clearInterval(barIv);
-        $('lb').style.width='100%';
-        $('lh').textContent='Kamera izni gerekli';
-        console.error('MindAR start error:',err);
-      });
-  };
+      const waitForMindAR=()=>{
+        const mindar=scene.systems['mindar-image-system'];
+        if(!mindar){setTimeout(waitForMindAR,300);return;}
+        mindar.start()
+          .then(()=>{
+            clearInterval(barIv);
+            $('lb').style.width='100%';
+            $('lh').textContent='Broşürü kameraya tut';
+            setTimeout(()=>{
+              $('ls').classList.add('fade');
+              setTimeout(()=>$('ls').style.display='none',1000);
+              showUI();
+            },800);
+          })
+          .catch(err=>{
+            clearInterval(barIv);
+            $('lh').textContent='Hata — sayfayı yenileyin';
+            console.error(err);
+          });
+      };
+
+      if(scene.hasLoaded){waitForMindAR();}
+      else{scene.addEventListener('loaded',waitForMindAR,{once:true});}
+    })
+    .catch(()=>{
+      clearInterval(barIv);
+      $('lb').style.width='100%';
+      $('lh').textContent='Kamera izni gerekli → Safari > Ayarlar > Kamera';
+    });
+
+  scene.addEventListener('targetFound',()=>{
+    if(revealed)return;
+    revealed=true;
+    $('sh').classList.add('off');
+    setTimeout(()=>$('sh').style.display='none',700);
+    $('yi').setAttribute('animation__rv',
+      `property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`
+    );
+    onRevealed();
+  });
+});
 
   if(scene.hasLoaded){
     onSceneLoaded();
