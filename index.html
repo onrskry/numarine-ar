@@ -554,7 +554,6 @@
     <div class="ls-mid">
       <div class="ls-bw"><div class="ls-b" id="lb"></div></div>
       <div class="ls-h" id="lh">Tap Start AR to open the camera</div>
-      <button id="start-ar-btn" type="button">Start AR</button>
     </div>
 
     <div class="ls-spacer"></div>
@@ -714,35 +713,112 @@
     },400);
 
     window.addEventListener('load',()=>{
-      const scene=$('asc');
-      const startBtn=$('start-ar-btn');
 
-      scene.style.display='block';
-      $('lh').textContent='Tap Start AR to open the camera';
+  const scene=$('asc');
 
-      if(startBtn){
-        startBtn.addEventListener('click',startAR);
+  scene.style.display='block';
+
+  $('lh').textContent='Requesting camera permission...';
+
+  navigator.mediaDevices.getUserMedia({
+
+    video:{facingMode:'environment'},
+
+    audio:false
+
+  })
+
+  .then(stream=>{
+
+    stream.getTracks().forEach(t=>t.stop());
+
+    clearInterval(barIv);
+
+    $('lb').style.width='100%';
+
+    $('lh').textContent='Point your camera at the printed page';
+
+    setTimeout(()=>{
+
+      $('ls').classList.add('fade');
+
+      setTimeout(()=>{
+
+        $('ls').style.display='none';
+
+        showUI();
+
+      },700);
+
+    },500);
+
+    const startMindAR=()=>{
+
+      const mindar=scene.systems['mindar-image-system'];
+
+      if(!mindar){
+
+        setTimeout(startMindAR,300);
+
+        return;
+
       }
 
-      scene.addEventListener('targetFound',()=>{
-        if(revealed)return;
-        revealed=true;
+      mindar.start().catch(err=>{
 
-        $('sh').classList.add('off');
-        setTimeout(()=>$('sh').style.display='none',700);
+        console.error('MindAR start error:',err);
 
-        $('yi').setAttribute(
-          'animation__rv',
-          `property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`
-        );
-
-        onRevealed();
       });
 
-      scene.addEventListener('targetLost',()=>{
-        console.log('Target lost');
-      });
-    });
+    };
+
+    if(scene.hasLoaded){
+
+      startMindAR();
+
+    }else{
+
+      scene.addEventListener('loaded',startMindAR,{once:true});
+
+    }
+
+  })
+
+  .catch(err=>{
+
+    console.error(err);
+
+    clearInterval(barIv);
+
+    $('lb').style.width='100%';
+
+    $('lh').textContent='Camera permission is required. Please allow camera access.';
+
+  });
+
+  scene.addEventListener('targetFound',()=>{
+
+    if(revealed)return;
+
+    revealed=true;
+
+    $('sh').classList.add('off');
+
+    setTimeout(()=>$('sh').style.display='none',700);
+
+    $('yi').setAttribute(
+
+      'animation__rv',
+
+      `property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`
+
+    );
+
+    onRevealed();
+
+  });
+
+});
 
     function showDebug(text){
       const d=$('debug');
