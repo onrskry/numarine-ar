@@ -5,35 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <title>Numarine 37XP · AR</title>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&family=Montserrat:wght@300;400;500&display=swap');
     :root{
-      --o:#e96818;--b:#111;--c:#f7f4ef;--c2:#fbf8f4;
+      --o:#e8590c;--b:#111;--c:#f7f4ef;--c2:#fbf8f4;
       --g:#666;--g2:#999;
       --ser:'EB Garamond',Georgia,serif;
       --san:'Montserrat',Arial,sans-serif;
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
     body{font-family:var(--san);overflow:hidden;background:#000;width:100vw;height:100vh;}
-    a-scene{position:fixed!important;inset:0;z-index:0;}
 
-    /* LOADING — turuncu */
+    /* Kamera video */
+    #cam{
+      position:fixed;inset:0;z-index:0;
+      width:100%;height:100%;object-fit:cover;
+      display:none;
+    }
+
+    /* LOADING */
     #ls{
       position:fixed;inset:0;z-index:2000;
       background:var(--o);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      transition:opacity 1s ease;
-      padding:0 0 max(32px,env(safe-area-inset-bottom,32px));
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:space-between;
+      padding:max(60px,env(safe-area-inset-top,60px)) 0 max(40px,env(safe-area-inset-bottom,40px));
+      transition:opacity .9s ease;
     }
     #ls.fade{opacity:0;pointer-events:none;}
-    .ls-logo{width:130px;display:block;filter:brightness(0) invert(1);}
-    .ls-logo-txt{font-family:Georgia,serif;font-size:28px;letter-spacing:7px;color:#fff;}
-    .ls-tag{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:6px;}
-    .ls-mid{display:flex;flex-direction:column;align-items:center;gap:14px;margin:auto 0;}
-    .ls-bw{width:120px;height:1px;background:rgba(255,255,255,.25);}
+    .ls-top{display:flex;flex-direction:column;align-items:center;gap:6px;}
+    .ls-logo{width:130px;filter:brightness(0) invert(1);}
+    .ls-logo-txt{font-family:Georgia,serif;font-size:26px;letter-spacing:7px;color:#fff;display:none;}
+    .ls-tag{font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.5);}
+    .ls-mid{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;padding:0 40px;}
+    .ls-bw{width:100%;max-width:140px;height:1px;background:rgba(255,255,255,.25);}
     .ls-b{height:1px;width:0%;background:#fff;transition:width .3s ease;}
-    .ls-h{font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.65);text-transform:uppercase;text-align:center;padding:0 20px;}
+    .ls-h{font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.7);text-transform:uppercase;text-align:center;}
     .ls-foot a{font-size:10px;letter-spacing:.15em;color:rgba(255,255,255,.45);text-decoration:none;text-transform:uppercase;border-bottom:.5px solid rgba(255,255,255,.2);padding-bottom:2px;}
 
     /* AR UI */
@@ -41,7 +48,7 @@
     #aui.v{display:block;}
     #aui>*{pointer-events:auto;}
 
-    #vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 55% 60% at 50% 52%,transparent 22%,rgba(0,0,0,.65)100%);opacity:0;transition:opacity 1.8s ease;}
+    #vig{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 55% 60% at 50% 52%,transparent 22%,rgba(0,0,0,.6)100%);opacity:0;transition:opacity 1.8s ease;}
     #vig.on{opacity:1;}
 
     .crn{position:fixed;width:22px;height:22px;z-index:200;opacity:0;transition:opacity .8s ease;pointer-events:none;}
@@ -54,21 +61,33 @@
     #bdg{position:fixed;top:max(16px,env(safe-area-inset-top,16px));left:16px;z-index:300;opacity:0;transition:opacity .6s ease;pointer-events:none;}
     #bdg.on{opacity:1;}
     #bdg img{width:88px;display:block;filter:brightness(0) invert(1);}
+    #bdg .bdg-txt{font-family:Georgia,serif;font-size:17px;letter-spacing:4px;color:#fff;display:none;}
     .bdg-m{font-size:7px;letter-spacing:.16em;color:var(--o);margin-top:3px;text-transform:uppercase;}
 
-    #marina-btn{position:fixed;top:max(16px,env(safe-area-inset-top,16px));right:14px;z-index:300;opacity:0;transition:opacity .6s ease;background:var(--o);border-radius:2px;padding:9px 14px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:7px;}
+    #marina-btn{
+      position:fixed;top:max(16px,env(safe-area-inset-top,16px));right:14px;
+      z-index:300;opacity:0;transition:opacity .6s ease;
+      background:var(--o);border-radius:2px;padding:9px 14px;
+      cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:7px;
+    }
     #marina-btn.on{opacity:1;}
     #marina-btn:active{filter:brightness(1.12);}
     .mb-txt{font-size:8px;letter-spacing:.12em;color:#fff;text-transform:uppercase;font-family:var(--san);font-weight:500;white-space:nowrap;}
 
-    #sh{position:fixed;bottom:106px;left:0;right:0;z-index:200;text-align:center;pointer-events:none;transition:opacity .6s ease;display:none;}
-    #sh.show{display:block;}
-    #sh.off{opacity:0;}
-    .sh-box{display:inline-flex;align-items:center;gap:9px;background:rgba(17,17,17,.9);border:.5px solid rgba(232,89,12,.25);border-radius:2px;padding:11px 20px;}
-    .sh-dot{width:6px;height:6px;border-radius:50%;background:var(--o);animation:blink 1.4s ease-in-out infinite;}
-    @keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
-    .sh-txt{font-size:9px;letter-spacing:.14em;color:rgba(247,244,239,.85);text-transform:uppercase;}
+    /* Scan hint — ekrana dokun */
+    #sh{
+      position:fixed;inset:0;z-index:200;
+      display:none;flex-direction:column;align-items:center;justify-content:center;
+      pointer-events:none;
+    }
+    #sh.show{display:flex;}
+    #sh.off{opacity:0;transition:opacity .5s ease;}
+    .sh-ring{width:80px;height:80px;border-radius:50%;border:1px solid rgba(232,89,12,.5);display:flex;align-items:center;justify-content:center;animation:pulse 2s ease-in-out infinite;margin-bottom:18px;}
+    .sh-ring-i{width:58px;height:58px;border-radius:50%;border:.5px solid rgba(232,89,12,.25);display:flex;align-items:center;justify-content:center;font-size:24px;}
+    @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.08);opacity:1}}
+    .sh-txt{font-size:9px;letter-spacing:.18em;color:rgba(247,244,239,.7);text-transform:uppercase;text-align:center;}
 
+    /* Hotspots */
     #hw{position:fixed;inset:0;z-index:300;pointer-events:none;display:none;}
     .hs{position:absolute;pointer-events:auto;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transform:translate(-50%,-50%);opacity:0;transition:opacity .5s ease;}
     .hs.on{opacity:1;}
@@ -76,6 +95,7 @@
     @keyframes hp{0%,100%{box-shadow:0 0 0 0 rgba(232,89,12,.5)}50%{box-shadow:0 0 0 10px rgba(232,89,12,0)}}
     .hs-l{font-size:7px;letter-spacing:.14em;color:var(--c);background:rgba(17,17,17,.92);padding:3px 8px;border-radius:1px;white-space:nowrap;border:.5px solid rgba(232,89,12,.2);text-transform:uppercase;}
 
+    /* Spec popup */
     #sp{position:fixed;bottom:92px;left:12px;right:12px;z-index:800;background:var(--b);border:.5px solid rgba(232,89,12,.25);border-radius:2px;padding:22px 20px 20px;display:none;box-shadow:0 -8px 40px rgba(0,0,0,.6);}
     .sp-a{animation:sua .38s cubic-bezier(.16,1,.3,1) both;}
     @keyframes sua{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
@@ -88,6 +108,7 @@
     .sp-k{color:var(--g);}
     .sp-v{color:var(--c2);text-align:right;max-width:58%;}
 
+    /* Bottom bar */
     #btm{position:fixed;bottom:0;left:0;right:0;z-index:700;padding:10px 12px max(14px,env(safe-area-inset-bottom,14px));background:linear-gradient(transparent,rgba(0,0,0,.95)38%);display:none;gap:8px;justify-content:center;}
     #btm.on{display:flex;}
     .cb{flex:1;max-width:78px;display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.04);border:.5px solid rgba(255,255,255,.09);border-radius:2px;padding:10px 6px 9px;color:rgba(247,244,239,.5);cursor:pointer;transition:all .15s;font-family:var(--san);}
@@ -96,11 +117,13 @@
     .cb-i{font-size:18px;line-height:1;}
     .cb-l{font-size:7px;letter-spacing:.08em;text-transform:uppercase;text-align:center;}
 
+    /* Full specs */
     #fsp{position:fixed;bottom:0;left:0;right:0;max-height:76vh;z-index:900;background:var(--b);border-top:1px solid rgba(232,89,12,.2);overflow:hidden;display:none;box-shadow:0 -16px 60px rgba(0,0,0,.7);}
     .fsp-a{animation:pu .42s cubic-bezier(.16,1,.3,1) both;}
     @keyframes pu{from{transform:translateY(100%)}to{transform:translateY(0)}}
     .fh{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:.5px solid rgba(255,255,255,.05);}
     .fh-logo{width:72px;display:block;filter:brightness(0) invert(1);margin-bottom:4px;}
+    .fh-logo-txt{font-family:Georgia,serif;font-size:15px;letter-spacing:4px;color:#fff;display:none;margin-bottom:4px;}
     .fh-m{font-size:8px;letter-spacing:.14em;color:var(--o);text-transform:uppercase;}
     .fh-x{color:rgba(255,255,255,.18);font-size:20px;cursor:pointer;padding:4px;}
     .fb{overflow-y:auto;max-height:calc(76vh - 68px);padding:4px 0 40px;-webkit-overflow-scrolling:touch;}
@@ -108,16 +131,28 @@
     .fr{display:flex;justify-content:space-between;align-items:center;padding:10px 22px;border-bottom:.5px solid rgba(255,255,255,.04);}
     .fr span:first-child{font-size:12px;color:var(--g);}
     .fr span:last-child{font-size:11px;color:var(--c2);text-align:right;max-width:55%;}
+
+    /* GLB 3D model overlay — basit model-viewer */
+    #mv-wrap{position:fixed;inset:0;z-index:50;pointer-events:none;display:none;}
+    #mv-wrap.show{display:block;}
+    model-viewer{
+      width:100%;height:100%;
+      background:transparent;
+      --poster-color:transparent;
+    }
   </style>
 </head>
 <body>
 
+<!-- Kamera arka plan -->
+<video id="cam" autoplay playsinline muted></video>
+
 <!-- LOADING -->
 <div id="ls">
-  <div style="display:flex;flex-direction:column;align-items:center;padding-top:max(60px,env(safe-area-inset-top,60px));">
+  <div class="ls-top">
     <img class="ls-logo" src="assets/logo.svg" alt="Numarine"
-         onerror="this.style.display='none';document.getElementById('ls-txt').style.display='block'">
-    <div id="ls-txt" style="display:none;" class="ls-logo-txt">NUMARINE</div>
+         onerror="this.style.display='none';document.getElementById('ls-logo-fallback').style.display='block'">
+    <div id="ls-logo-fallback" style="display:none;font-family:Georgia,serif;font-size:26px;letter-spacing:7px;color:#fff;">NUMARINE</div>
     <div class="ls-tag">Born to Explore</div>
   </div>
   <div class="ls-mid">
@@ -137,7 +172,8 @@
 
   <div id="bdg">
     <img src="assets/logo.svg" alt="Numarine"
-         onerror="this.outerHTML='<div style=\'font-family:Georgia,serif;font-size:17px;letter-spacing:4px;color:#fff;\'>NUMARINE</div>'">
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <div class="bdg-txt">NUMARINE</div>
     <div class="bdg-m">37XP · AR</div>
   </div>
 
@@ -145,18 +181,19 @@
     <span class="mb-txt">💬 Satış Danışmanı</span>
   </a>
 
+  <!-- Scan hint: ekrana dokun -->
   <div id="sh">
-    <div class="sh-box">
-      <div class="sh-dot"></div>
-      <div class="sh-txt" id="sht">Broşürü kameraya tut</div>
+    <div class="sh-ring">
+      <div class="sh-ring-i">👆</div>
     </div>
+    <div class="sh-txt">Ekrana dokun<br>tekne yerleşir</div>
   </div>
 
   <div id="hw">
-    <div class="hs" id="h0" style="left:60%;top:68%" onclick="openSpec('engine')"><div class="hs-d">+</div><div class="hs-l">Motorlar</div></div>
-    <div class="hs" id="h1" style="left:35%;top:45%" onclick="openSpec('cabin')"><div class="hs-d">+</div><div class="hs-l">Kabinler</div></div>
-    <div class="hs" id="h2" style="left:50%;top:28%" onclick="openSpec('bridge')"><div class="hs-d">+</div><div class="hs-l">Köprüüstü</div></div>
-    <div class="hs" id="h3" style="left:75%;top:50%" onclick="openSpec('perf')"><div class="hs-d">+</div><div class="hs-l">Performans</div></div>
+    <div class="hs" id="h0" style="left:60%;top:62%" onclick="openSpec('engine')"><div class="hs-d">+</div><div class="hs-l">Motorlar</div></div>
+    <div class="hs" id="h1" style="left:35%;top:42%" onclick="openSpec('cabin')"><div class="hs-d">+</div><div class="hs-l">Kabinler</div></div>
+    <div class="hs" id="h2" style="left:50%;top:25%" onclick="openSpec('bridge')"><div class="hs-d">+</div><div class="hs-l">Köprüüstü</div></div>
+    <div class="hs" id="h3" style="left:75%;top:48%" onclick="openSpec('perf')"><div class="hs-d">+</div><div class="hs-l">Performans</div></div>
   </div>
 
   <div id="sp"><div class="sp-x" onclick="closeSpec()">✕</div><div id="spb"></div></div>
@@ -172,7 +209,8 @@
     <div class="fh">
       <div>
         <img class="fh-logo" src="assets/logo.svg" alt="Numarine"
-             onerror="this.outerHTML='<div style=\'font-family:Georgia,serif;font-size:15px;letter-spacing:4px;color:#fff;\'>NUMARINE</div>'">
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="fh-logo-txt">NUMARINE</div>
         <div class="fh-m">37XP Explorer · Teknik Özellikler</div>
       </div>
       <div class="fh-x" onclick="toggleFsp()">✕</div>
@@ -208,33 +246,26 @@
   </div>
 </div>
 
-<!-- A-FRAME: GLB yüklenmesini bekleme, scene ayrı -->
-<a-scene id="asc"
-  mindar-image="imageTargetSrc:targets/numarine-brochure.mind;autoStart:false;uiLoading:no;uiScanning:no;uiError:no;filterMinCF:0.001;filterBeta:0.01"
-  color-space="sRGB"
-  renderer="colorManagement:true;physicallyCorrectLights:true"
-  vr-mode-ui="enabled:false"
-  device-orientation-permission-ui="enabled:false"
-  style="display:none">
-  <a-assets>
-    <!-- GLB timeout yok — background'da yüklenir -->
-    <a-asset-item id="ya" src="assets/yacht.glb"></a-asset-item>
-  </a-assets>
-  <a-entity mindar-image-target="targetIndex:0">
-    <a-entity
-      id="yi"
-      gltf-model="#ya"
-      position="0 0.1 0"
-      rotation="0 0 0"
-      scale="0 0 0"
-      shadow="cast:true;receive:true"
-    ></a-entity>
-  </a-entity>
-  <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
-  <a-light type="ambient" color="#ffffff" intensity="1.0"></a-light>
-  <a-light type="directional" color="#fff8f0" intensity="1.8" position="2 4 2"></a-light>
-  <a-light type="directional" color="#ddeeff" intensity="0.5" position="-2 2 -2"></a-light>
-</a-scene>
+<!-- model-viewer: GLB'yi kamera üstüne overlay olarak gösterir -->
+<div id="mv-wrap">
+  <model-viewer
+    id="mv"
+    src="assets/yacht.glb"
+    camera-controls
+    disable-zoom
+    auto-rotate
+    auto-rotate-delay="1000"
+    rotation-per-second="20deg"
+    shadow-intensity="0"
+    exposure="1.2"
+    style="background:transparent;"
+    ar
+    ar-modes="webxr scene-viewer"
+  ></model-viewer>
+</div>
+
+<!-- model-viewer polyfill -->
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 
 <script>
 const SPECS={
@@ -248,112 +279,82 @@ const SPECS={
     rows:[['Maks Hız','14 knot'],['Seyir','12 knot'],['Ekonomik','8 knot'],['Menzil','6,000 nm @ 8 kn']]}
 };
 
-let revealed=false,rotating=false,si=1,toured=false;
-const SCALES=[['0.003 0.003 0.003','Küçük'],['0.006 0.006 0.006','Normal'],['0.010 0.010 0.010','Büyük']];
+let placed=false,rotating=false,si=1,toured=false;
 const $=id=>document.getElementById(id);
 
-/* Loading bar — GLB'yi beklemiyor */
+/* Loading bar — bağımsız, hiçbir şeyi beklemiyor */
 let prog=0;
 const barIv=setInterval(()=>{
-  prog=Math.min(prog+Math.random()*14+7,75);
+  prog=Math.min(prog+Math.random()*16+8,90);
   $('lb').style.width=prog+'%';
-},380);
+},350);
 
-window.addEventListener('load',()=>{
-  $('lh').textContent='Kamera izni isteniyor...';
+/* Kamera aç — tek sorumluluk: video stream */
+navigator.mediaDevices.getUserMedia({
+  video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},
+  audio:false
+}).then(stream=>{
+  const cam=$('cam');
+  cam.srcObject=stream;
+  cam.style.display='block';
+  cam.play();
 
-  /* 1. Önce kamera izni al */
-  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})
-    .then(stream=>{
-      /* İzin alındı — stream'i hemen kapat, MindAR kendi açacak */
-      stream.getTracks().forEach(t=>t.stop());
+  /* Loading'i kapat */
+  clearInterval(barIv);
+  $('lb').style.width='100%';
+  $('lh').textContent='Ekrana dokun — tekne yerleşir';
 
-      $('lh').textContent='AR başlatılıyor...';
-      prog=80; $('lb').style.width='80%';
+  setTimeout(()=>{
+    $('ls').classList.add('fade');
+    setTimeout(()=>$('ls').style.display='none',1000);
+    showARUI();
+  },600);
 
-      /* 2. A-Frame scene'i görünür yap */
-      const scene=$('asc');
-      scene.style.display='block';
-
-      /* 3. MindAR system hazır olunca start et */
-      const tryStart=()=>{
-        const mindar=scene.systems['mindar-image-system'];
-        if(!mindar){
-          setTimeout(tryStart,200);
-          return;
-        }
-        mindar.start()
-          .then(()=>{
-            clearInterval(barIv);
-            prog=100; $('lb').style.width='100%';
-            $('lh').textContent='Broşürü kameraya tut';
-            setTimeout(()=>{
-              $('ls').classList.add('fade');
-              setTimeout(()=>$('ls').style.display='none',1000);
-              showUI();
-            },700);
-          })
-          .catch(err=>{
-            clearInterval(barIv);
-            $('lb').style.width='100%';
-            $('lh').textContent='Hata oluştu — sayfayı yenileyin';
-            console.error('MindAR start error:',err);
-          });
-      };
-
-      /* Scene yüklendiyse direkt, yoksa bekle */
-      if(scene.hasLoaded){ tryStart(); }
-      else { scene.addEventListener('loaded',tryStart,{once:true}); }
-
-      /* 4. Broşür bulununca tekne çıkar */
-      scene.addEventListener('targetFound',()=>{
-        if(revealed)return;
-        revealed=true;
-        $('sht').textContent='Tekne yükleniyor...';
-        $('sh').classList.add('off');
-        setTimeout(()=>$('sh').style.display='none',700);
-        /* GLB yüklendiyse direkt göster, yoksa bekle */
-        const y=$('yi');
-        const doReveal=()=>{
-          y.setAttribute('animation__rv',
-            `property:scale;from:0 0 0;to:${SCALES[si][0]};dur:1400;easing:easeOutElastic`
-          );
-          onRevealed();
-        };
-        const mesh=y.getObject3D&&y.getObject3D('mesh');
-        if(mesh){ doReveal(); }
-        else { y.addEventListener('model-loaded',doReveal,{once:true}); }
-      });
-
-      scene.addEventListener('targetLost',()=>{
-        /* tekne son konumda kalır */
-      });
-    })
-    .catch(()=>{
-      clearInterval(barIv);
-      $('lb').style.width='100%';
-      $('lh').textContent='Kamera izni gerekli → Ayarlar > Safari > Kamera';
-    });
+}).catch(()=>{
+  clearInterval(barIv);
+  $('lb').style.width='100%';
+  $('lh').textContent='Kamera izni gerekli → Ayarlar > Safari > Kamera';
 });
 
-function onRevealed(){
-  setTimeout(()=>$('vig').classList.add('on'),400);
-  setTimeout(()=>{
-    $('hw').style.display='block';
-    document.querySelectorAll('.hs').forEach((el,i)=>
-      setTimeout(()=>el.classList.add('on'),i*220)
-    );
-  },1600);
-  setTimeout(()=>$('btm').classList.add('on'),2000);
-  setTimeout(autoTour,2500);
-}
-
-function showUI(){
+/* AR UI göster */
+function showARUI(){
   $('aui').classList.add('v');
   $('bdg').classList.add('on');
   $('marina-btn').classList.add('on');
   ['c1','c2','c3','c4'].forEach(id=>$(id).classList.add('on'));
   $('sh').classList.add('show');
+
+  /* Tap → model yerleştir */
+  document.addEventListener('click',onTap,{once:true});
+}
+
+/* Ekrana dokunulunca model-viewer göster */
+function onTap(){
+  if(placed)return;
+  placed=true;
+
+  $('sh').classList.add('off');
+  setTimeout(()=>$('sh').style.display='none',600);
+
+  /* model-viewer'ı göster */
+  $('mv-wrap').classList.add('show');
+
+  /* Vignette */
+  setTimeout(()=>$('vig').classList.add('on'),300);
+
+  /* Hotspot'lar */
+  setTimeout(()=>{
+    $('hw').style.display='block';
+    document.querySelectorAll('.hs').forEach((el,i)=>
+      setTimeout(()=>el.classList.add('on'),i*220)
+    );
+  },800);
+
+  /* Alt bar */
+  setTimeout(()=>$('btm').classList.add('on'),1200);
+
+  /* Spec turu */
+  setTimeout(autoTour,1800);
 }
 
 function autoTour(){
@@ -383,17 +384,16 @@ window.toggleRot=function(){
   rotating=!rotating;
   $('cr').classList.toggle('on',rotating);
   $('rl').textContent=rotating?'Dur':'Döndür';
-  const m=$('yi');
-  rotating
-    ?m.setAttribute('animation__rot','property:rotation;to:0 360 0;loop:true;dur:18000;easing:linear')
-    :m.removeAttribute('animation__rot');
+  const mv=$('mv');
+  mv.setAttribute('auto-rotate', rotating?'':'false');
 };
 
 window.cycleScale=function(){
-  si=(si+1)%SCALES.length;
-  const[sv,sl]=SCALES[si];
-  $('yi').setAttribute('animation__scale',`property:scale;to:${sv};dur:500;easing:easeOutQuad`);
-  $('sl').textContent=sl;
+  const sizes=['60%','80%','100%'];
+  si=(si+1)%sizes.length;
+  const labels=['Küçük','Normal','Büyük'];
+  $('mv-wrap').style.transform=`scale(${[0.5,0.75,1][si]})`;
+  $('sl').textContent=labels[si];
 };
 
 window.toggleFsp=function(){
@@ -407,24 +407,6 @@ window.doShare=async function(){
     try{await navigator.share({title:'Numarine 37XP AR',url:location.href});}catch(e){}
   } else { navigator.clipboard?.writeText(location.href); }
 };
-
-/* Pinch zoom */
-let pd=null;
-document.addEventListener('touchmove',e=>{
-  if(!revealed||e.touches.length<2)return;
-  const dx=e.touches[1].clientX-e.touches[0].clientX;
-  const dy=e.touches[1].clientY-e.touches[0].clientY;
-  const d=Math.sqrt(dx*dx+dy*dy);
-  if(pd!==null){
-    const m=$('yi');
-    const cur=m.getAttribute('scale');
-    const sv=parseFloat((cur&&cur.x)||'0.006');
-    const nv=Math.max(0.001,Math.min(0.02,sv+(d-pd)*0.00005));
-    m.setAttribute('scale',`${nv} ${nv} ${nv}`);
-  }
-  pd=d;
-},{passive:true});
-document.addEventListener('touchend',()=>pd=null);
 </script>
 </body>
 </html>
